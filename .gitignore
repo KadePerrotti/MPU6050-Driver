@@ -1,0 +1,10 @@
+.settings
+.vscode
+
+[Rr]elease
+[Dd]ebug
+
+.cproject
+.mxproject
+.project
+*.launch
