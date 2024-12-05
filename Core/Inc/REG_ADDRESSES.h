@@ -24,26 +24,26 @@
 
 //Gyro sample rate divider. Sample Rate = Gyro rate / (1 + REG_SMPRT_DIV)
 #define REG_SMPRT_DIV (0x19)
-#define SAMPLE_RATE_100Hz (9) //Gyro rate = 1KHz when DLPF enabled
+#define SAMPLE_RATE_100Hz (0x9) //Gyro rate = 1KHz when DLPF enabled
 
 //Digital low pass and external Frame Synchronization Configuration
 #define REG_CONFIG (0x1A)
-#define DLPF_OFF (0) //makes sample rate 8KHz
-#define DLPF_MAX_FILTER (6) //makes sample rate 1KHz
-#define EXT_SYNC_OFF (0) //turn off fsync (not sure what this does)
+#define DLPF_OFF (0x0) //makes sample rate 8KHz
+#define DLPF_MAX_FILTER (0x6) //makes sample rate 1KHz
+#define EXT_SYNC_OFF (0x0) //turn off fsync (not sure what this does)
 
 //Gyroscope config and self test activation register
 #define REG_GYRO_CONFIG (0x1B)
-#define GYRO_FS_SEL_250_DPS (0) //Gyro full scale range +-250 degrees / sec
-#define GYRO_FS_SEL_500_DPS (1 << 3) //Gyro full scale range +-500 degrees / sec
-#define GYRO_FS_SEL_1000_DPS (2 << 3) //Gyro full scale range +-1000 degrees / sec
-#define GYRO_FS_SEL_2000_DPS (3 << 3) //Gyro full scale range +-2000 degrees / sec
+#define GYRO_FS_SEL_250_DPS (0x0) //Gyro full scale range +-250 degrees / sec
+#define GYRO_FS_SEL_500_DPS (0x1 << 3) //Gyro full scale range +-500 degrees / sec
+#define GYRO_FS_SEL_1000_DPS (0x2 << 3) //Gyro full scale range +-1000 degrees / sec
+#define GYRO_FS_SEL_2000_DPS (0x3 << 3) //Gyro full scale range +-2000 degrees / sec
 
 //Accelerometer config and self test activation register
 #define REG_ACCEL_CONFIG (0x1C)
-#define ACCEL_FS_2G (0) //Accel full scale range +-2g
-#define ACCEL_FS_4G (1 << 3) //Accel full scale range +-4g
-#define ACCEL_FS_8G (1 << 3) //Accel full scale range +-8g
-#define ACCEL_FS_16G (1 << 3) //Accel full scale range +-16g
+#define ACCEL_FS_2G (0x0) //Accel full scale range +-2g
+#define ACCEL_FS_4G (0x1 << 3) //Accel full scale range +-4g
+#define ACCEL_FS_8G (0x2 << 3) //Accel full scale range +-8g
+#define ACCEL_FS_16G (0x3 << 3) //Accel full scale range +-16g
 
 #endif /* INC_REG_ADDRESSES_H_ */
