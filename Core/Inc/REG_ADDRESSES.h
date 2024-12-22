@@ -17,10 +17,30 @@
 //Contains the 7 bit address of MPU_6050
 #define REG_WHO_AM_I (0x75)
 
+#define REG_USER_CTRL (0x6A)
+#define FIFO_RESET (0x4)
+#define I2C_MST_RESET (0x2)
+#define SIG_COND_RESET (0x1)
+
 //Power mode and clock source (internal, external, gyro(?))
 #define REG_PWR_MGMT_1 (0x6B)
 #define PWR_MGMT_DEV_RESET (0x80) //Set all registers to their defaults
 #define PWR_MGMT_CLK_SEL_INTERNAL (0x0) //Select the clock source to be the internal 8MHz clock
+
+//Power management 2
+#define REG_PWR_MGMT_2 (0x6C)
+// accelerometer low power mode 
+#define LP_WAKE_CTRL_0 (0x0) //wake-up 1.25Hz
+#define LP_WAKE_CTRL_1 (0x1 << 6) //5 Hz
+#define LP_WAKE_CTRL_2 (0x2 << 6) //20Hz
+#define LP_WAKE_CTRL_3 (0x3 << 6) //40Hz
+//set specific axes of gyro and accel to standby mode
+#define STBY_XA (0x1 << 5) //accelerometer x
+#define STBY_YA (0x1 << 4)
+#define STBY_ZA (0x1 << 3)
+#define STBY_XG (0x1 << 2) //gyro x
+#define STBY_YG (0x1 << 1)
+#define STBY_ZG (0x1 << 0)
 
 //Gyro sample rate divider. Sample Rate = Gyro rate / (1 + REG_SMPRT_DIV)
 #define REG_SMPRT_DIV (0x19)
