@@ -66,7 +66,10 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
+  char txBuff[100];
+  int numSamples = 6 * 5 * 100; //6 axis * 5 seconds * 100 samples/sec
+  float samples[numSamples];
+  uint8_t buffLen = 0;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -91,47 +94,59 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   uint16_t result = init_mpu6050();
-  read_setup_registers();
+  //read_setup_registers();
   const float samplingFreq = 100; //100Hz freq
-  const float samplingPeriod = 1.0f / samplingFreq; //0.01s = 10ms
+  const float samplingPeriod = 1.0f / samplingFreq; //0.01s
+  const int samplingPeriodMs = (int)S_TO_MS(samplingPeriod);
+  buffLen = sprintf(txBuff, "\raccelX,accelY,accelZ,gyroX,gyroY,gyroZ");
+  HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, buffLen, 100);
+  txBuff[0] = '\0';
+  int i = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
+  while (i < numSamples)
   {
     /* USER CODE END WHILE */
     int startRead = HAL_GetTick();
-    uint16_t zMeasureUpper = 0;
-    uint16_t zMeasureLower = 0;
-    //upper portion of accel x
+    float accelX = read_accel_axis(REG_ACCEL_X_MEASURE_1);
+    samples[i++] = accelX;
     
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_ACCEL_Z_MEASURE_1,
-        SIZE_1_BYTE,
-        &zMeasureUpper,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
+    float accelY = read_accel_axis(REG_ACCEL_Y_MEASURE_1);
+    samples[i++] = accelY;
+    
+    float accelZ = read_accel_axis(REG_ACCEL_Z_MEASURE_1);
+    samples[i++] = accelZ;
 
-    //lower portion
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_ACCEL_Z_MEASURE_2,
-        SIZE_1_BYTE,
-        &zMeasureLower,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
+    float gyroX = read_gyro_axis(REG_GYRO_X_MEASURE_1);
+    samples[i++] = gyroX;
 
-    uint16_t combined = (zMeasureUpper << 8) | zMeasureLower;
-    float scaled = (float)combined / 8192.0f;
-    HAL_Delay(1000);
+    float gyroY = read_gyro_axis(REG_GYRO_Y_MEASURE_1);
+    samples[i++] = gyroY;
+
+    float gyroZ = read_gyro_axis(REG_GYRO_Z_MEASURE_1);
+    samples[i++] = gyroZ;
+
+
+    int endRead = HAL_GetTick();
+    int totalTime = endRead - startRead; //ms
+    HAL_Delay(samplingPeriodMs - totalTime);
 
     /* USER CODE BEGIN 3 */
+  }
+  
+  //write data out to uart
+  i = 0;
+  while(i < numSamples)
+  {
+    buffLen = sprintf(txBuff, "\r\n%.2f,%.2f,%.2f,%.2f,%.2f,%.2f", 
+      samples[i], samples[i + 1], samples[i + 2], //accel xyz
+      samples[i + 3], samples[i + 4], samples[i + 5] //gyro xyz
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, buffLen, 100);
+    txBuff[0] = '\0';
+    i += 6;
   }
   /* USER CODE END 3 */
 }

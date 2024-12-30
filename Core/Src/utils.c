@@ -41,8 +41,9 @@ uint16_t init_mpu6050(void)
     MPU6050_REG_WRITE(REG_PWR_MGMT_1, PWR_MGMT_CLK_SEL_INTERNAL);
 
     //setup 2nd power management register
-    MPU6050_REG_WRITE(REG_PWR_MGMT_2, STBY_XA | STBY_YA | STBY_XG | STBY_YG); //only leave gyro and accel z axis awake
-    
+    //MPU6050_REG_WRITE(REG_PWR_MGMT_2, STBY_ZG | STBY_XG | STBY_YG); //gyro sleeps
+    MPU6050_REG_WRITE(REG_PWR_MGMT_2, 0x0); //awaken all accel + gyro axes
+
     //setup the config register for max filtering
     MPU6050_REG_WRITE(REG_CONFIG, DLPF_MAX_FILTER | EXT_SYNC_OFF);
 
@@ -152,7 +153,67 @@ void read_setup_registers(void)
     HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
     txBuff[0] = '\0';
     readBuff = 0;
-
-
 }
 
+
+float read_accel_axis(uint8_t address)
+{
+    uint8_t measureUpper = 0;
+    uint8_t measureLower = 0;
+    //upper portion of accel x
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        address,
+        SIZE_1_BYTE,
+        &measureUpper,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    //lower portion
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        address + 1,
+        SIZE_1_BYTE,
+        &measureLower,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
+    float scaled = (float)combined / 8192.0f;
+    return scaled;
+}
+
+float read_gyro_axis(uint8_t address)
+{
+    uint8_t measureUpper = 0;
+    uint8_t measureLower = 0;
+    //upper portion of gyeo x
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        address,
+        SIZE_1_BYTE,
+        &measureUpper,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    //lower portion
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        address + 1,
+        SIZE_1_BYTE,
+        &measureLower,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
+    float scaled = (float)combined / 65.5f;
+    return scaled;
+}

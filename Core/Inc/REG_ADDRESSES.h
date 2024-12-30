@@ -75,5 +75,13 @@
 #define REG_ACCEL_Z_MEASURE_1 (0x3F) //[15:8]
 #define REG_ACCEL_Z_MEASURE_2 (0x40) //[7:0]
 
+#define REG_GYRO_X_MEASURE_1 (0x43) //[15:8]
+#define REG_GYRO_X_MEASURE_2 (0x44) //[7:0]
+
+#define REG_GYRO_Y_MEASURE_1 (0x45) //[15:8]
+#define REG_GYRO_Y_MEASURE_2 (0x46) //[7:0]
+
+#define REG_GYRO_Z_MEASURE_1 (0x47) //[15:8]
+#define REG_GYRO_Z_MEASURE_2 (0x48) //[7:0]
 
 #endif /* INC_REG_ADDRESSES_H_ */

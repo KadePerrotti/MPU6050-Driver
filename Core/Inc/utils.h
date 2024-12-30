@@ -21,6 +21,10 @@
 
 #define HAL_I2C_TIMEOUT (100)
 
+#define S_TO_MS(s) (s * 1000)
+
 uint16_t init_mpu6050(void);
 void read_setup_registers(void);
+float read_accel_axis(uint8_t address);
+float read_gyro_axis(uint8_t address);
 #endif /* INC_UTILS_H_ */
