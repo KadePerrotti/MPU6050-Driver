@@ -92,6 +92,8 @@ int main(void)
   /* USER CODE BEGIN 2 */
   uint16_t result = init_mpu6050();
   read_setup_registers();
+  const float samplingFreq = 100; //100Hz freq
+  const float samplingPeriod = 1.0f / samplingFreq; //0.01s = 10ms
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -99,6 +101,35 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
+    int startRead = HAL_GetTick();
+    uint16_t zMeasureUpper = 0;
+    uint16_t zMeasureLower = 0;
+    //upper portion of accel x
+    
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_ACCEL_Z_MEASURE_1,
+        SIZE_1_BYTE,
+        &zMeasureUpper,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    //lower portion
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_ACCEL_Z_MEASURE_2,
+        SIZE_1_BYTE,
+        &zMeasureLower,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    uint16_t combined = (zMeasureUpper << 8) | zMeasureLower;
+    float scaled = (float)combined / 8192.0f;
+    HAL_Delay(1000);
 
     /* USER CODE BEGIN 3 */
   }

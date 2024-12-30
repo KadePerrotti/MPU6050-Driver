@@ -66,4 +66,14 @@
 #define ACCEL_FS_8G (0x2 << 3) //Accel full scale range +-8g
 #define ACCEL_FS_16G (0x3 << 3) //Accel full scale range +-16g
 
+#define REG_ACCEL_X_MEASURE_1 (0x3B) //[15:8]
+#define REG_ACCEL_X_MEASURE_2 (0x3C) //[7:0]
+
+#define REG_ACCEL_Y_MEASURE_1 (0x3D) //[15:8]
+#define REG_ACCEL_Y_MEASURE_2 (0x3E) //[7:0]
+
+#define REG_ACCEL_Z_MEASURE_1 (0x3F) //[15:8]
+#define REG_ACCEL_Z_MEASURE_2 (0x40) //[7:0]
+
+
 #endif /* INC_REG_ADDRESSES_H_ */

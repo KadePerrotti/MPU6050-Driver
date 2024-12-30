@@ -41,7 +41,7 @@ uint16_t init_mpu6050(void)
     MPU6050_REG_WRITE(REG_PWR_MGMT_1, PWR_MGMT_CLK_SEL_INTERNAL);
 
     //setup 2nd power management register
-    MPU6050_REG_WRITE(REG_PWR_MGMT_2, STBY_YA | STBY_ZA | STBY_YG | STBY_ZG); //only leave gyro and accel x axis awake
+    MPU6050_REG_WRITE(REG_PWR_MGMT_2, STBY_XA | STBY_YA | STBY_XG | STBY_YG); //only leave gyro and accel z axis awake
     
     //setup the config register for max filtering
     MPU6050_REG_WRITE(REG_CONFIG, DLPF_MAX_FILTER | EXT_SYNC_OFF);
