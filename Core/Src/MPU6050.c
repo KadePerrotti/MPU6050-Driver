@@ -4,7 +4,7 @@
  *  Created on: Nov 25, 2024
  *      Author: Kade
  */
-#include "utils.h"
+#include <MPU6050.h>
 
 void MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue)
 {
@@ -21,13 +21,6 @@ void MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue)
 
 uint16_t init_mpu6050(void)
 {
-    char txBuff[100];
-    int uart_buf_len = 0;
-
-    uart_buf_len = sprintf(txBuff, "\r\n-------------------------\r\n");
-    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
-    txBuff[0] = '\0';
-
     //reset the power managment register
     MPU6050_REG_WRITE(REG_PWR_MGMT_1, PWR_MGMT_DEV_RESET);
     HAL_Delay(100);
@@ -43,18 +36,6 @@ uint16_t init_mpu6050(void)
     //setup 2nd power management register
     //MPU6050_REG_WRITE(REG_PWR_MGMT_2, STBY_ZG | STBY_XG | STBY_YG); //gyro sleeps
     MPU6050_REG_WRITE(REG_PWR_MGMT_2, 0x0); //awaken all accel + gyro axes
-
-    //setup the config register for max filtering
-    MPU6050_REG_WRITE(REG_CONFIG, DLPF_MAX_FILTER | EXT_SYNC_OFF);
-
-    //setup the gyro
-    MPU6050_REG_WRITE(REG_GYRO_CONFIG, GYRO_FS_SEL_500_DPS);   
-    
-    //setup the accelerometer
-    MPU6050_REG_WRITE(REG_ACCEL_CONFIG, ACCEL_FS_4G);
-
-    //setup the sample rate divider
-    MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
     
     HAL_Delay(1000);
 
@@ -85,7 +66,7 @@ void read_setup_registers(void)
         fsync_val, 
         fsync_val == EXT_SYNC_OFF ? 't' : 'f',
         dlpf_val,
-        dlpf_val == DLPF_MAX_FILTER ? 't' : 'f'
+        dlpf_val == DLPF_CFG_6 ? 't' : 'f'
     );
     HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
     txBuff[0] = '\0';
@@ -106,7 +87,7 @@ void read_setup_registers(void)
         txBuff, 
         "\r\n\n Gyro Full Scale: \r\n  FS: %d, %c\r\n", 
         gyro_sel, 
-        gyro_sel == GYRO_FS_SEL_500_DPS ? 't' : 'f'
+        gyro_sel == GYRO_FS_SEL_250_DPS ? 't' : 'f'
     );
     HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
     txBuff[0] = '\0';
@@ -127,7 +108,7 @@ void read_setup_registers(void)
         txBuff, 
         "\r\n\n Accel Config Reg: \r\n  Full Scale: %d, %c\r\n", 
         fs_val, 
-        fs_val == ACCEL_FS_4G ? 't' : 'f'
+        fs_val == ACCEL_FS_2G ? 't' : 'f'
     );
     HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
     txBuff[0] = '\0';
@@ -156,11 +137,11 @@ void read_setup_registers(void)
 }
 
 
-float read_accel_axis(uint8_t address)
+float read_accel_axis(uint8_t address, uint16_t scaler)
 {
     uint8_t measureUpper = 0;
     uint8_t measureLower = 0;
-    //upper portion of accel x
+    //upper portion of accel 
     HAL_I2C_Mem_Read(
         &hi2c1, 
         MPU_6050_HAL_I2C_ADDR,
@@ -183,11 +164,11 @@ float read_accel_axis(uint8_t address)
     );
 
     int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
-    float scaled = (float)combined / 8192.0f;
+    float scaled = (float)combined / scaler;
     return scaled;
 }
 
-float read_gyro_axis(uint8_t address)
+float read_gyro_axis(uint8_t address, uint16_t scaler)
 {
     uint8_t measureUpper = 0;
     uint8_t measureLower = 0;
@@ -214,6 +195,6 @@ float read_gyro_axis(uint8_t address)
     );
 
     int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
-    float scaled = (float)combined / 65.5f;
+    float scaled = (float)combined / scaler;
     return scaled;
 }
