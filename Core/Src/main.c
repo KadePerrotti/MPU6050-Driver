@@ -94,7 +94,20 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   uint16_t result = init_mpu6050();
-  //read_setup_registers();
+
+  //setup the low pass filter. 
+  MPU6050_REG_WRITE(REG_CONFIG, DLPF_CFG_6 | EXT_SYNC_OFF);
+
+  //select Gyroscope's full scale range
+  MPU6050_REG_WRITE(REG_GYRO_CONFIG, GYRO_FS_SEL_250_DPS);   
+  
+  //select Accelerometer's full scale range
+  MPU6050_REG_WRITE(REG_ACCEL_CONFIG, ACCEL_FS_2G);
+
+  //setup the sample rate divider
+  MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
+
+  read_setup_registers();
   const float samplingFreq = 100; //100Hz freq
   const float samplingPeriod = 1.0f / samplingFreq; //0.01s
   const int samplingPeriodMs = (int)S_TO_MS(samplingPeriod);
@@ -110,22 +123,22 @@ int main(void)
   {
     /* USER CODE END WHILE */
     int startRead = HAL_GetTick();
-    float accelX = read_accel_axis(REG_ACCEL_X_MEASURE_1);
+    float accelX = read_accel_axis(REG_ACCEL_X_MEASURE_1, ACCEL_FS_2_DIV);
     samples[i++] = accelX;
     
-    float accelY = read_accel_axis(REG_ACCEL_Y_MEASURE_1);
+    float accelY = read_accel_axis(REG_ACCEL_Y_MEASURE_1, ACCEL_FS_2_DIV);
     samples[i++] = accelY;
     
-    float accelZ = read_accel_axis(REG_ACCEL_Z_MEASURE_1);
+    float accelZ = read_accel_axis(REG_ACCEL_Z_MEASURE_1, ACCEL_FS_2_DIV);
     samples[i++] = accelZ;
 
-    float gyroX = read_gyro_axis(REG_GYRO_X_MEASURE_1);
+    float gyroX = read_gyro_axis(REG_GYRO_X_MEASURE_1, GYRO_FS_250_DIV);
     samples[i++] = gyroX;
 
-    float gyroY = read_gyro_axis(REG_GYRO_Y_MEASURE_1);
+    float gyroY = read_gyro_axis(REG_GYRO_Y_MEASURE_1, GYRO_FS_250_DIV);
     samples[i++] = gyroY;
 
-    float gyroZ = read_gyro_axis(REG_GYRO_Z_MEASURE_1);
+    float gyroZ = read_gyro_axis(REG_GYRO_Z_MEASURE_1, GYRO_FS_250_DIV);
     samples[i++] = gyroZ;
 
 
