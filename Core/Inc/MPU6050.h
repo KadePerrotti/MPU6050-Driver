@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "i2c.h"
 #include "usart.h"
 
@@ -65,4 +66,23 @@ float read_accel_axis(uint8_t address, uint16_t scaler);
  * @return The gyro measurement in DPS (degrees per second)
  */
 float read_gyro_axis(uint8_t address, uint16_t scaler);
+
+
+typedef enum 
+{
+    FACTORY_TEST_PASS = 0,
+    FACTORY_TEST_FAIL = -1
+} FACTORY_TEST_RESULT;
+
+/**
+ * Runs a self test on the gyro. Steps:
+ * 1. Set gyro's full scale range to 250dps
+ * 1. Save gyro's output with self test disabled (TD)
+ * 2. Enable self test register
+ * 3. Save gyro's output with self test enabled (TE)
+ * 4. SelfTestResponse (STR) = TE - TD
+ * 5. 
+ */
+FACTORY_TEST_RESULT gyro_self_test(void);
+
 #endif /* INC_MPU6050_H_ */

@@ -71,14 +71,26 @@
 
 //Gyroscope config and self test activation register
 #define REG_GYRO_CONFIG (0x1B)
+#define GYRO_FS_SEL_MASK (0x18)
 #define GYRO_FS_SEL_250_DPS (0x0) //Gyro full scale range +-250 degrees / sec
 #define GYRO_FS_SEL_500_DPS (0x1 << 3) //Gyro full scale range +-500 degrees / sec
 #define GYRO_FS_SEL_1000_DPS (0x2 << 3) //Gyro full scale range +-1000 degrees / sec
 #define GYRO_FS_SEL_2000_DPS (0x3 << 3) //Gyro full scale range +-2000 degrees / sec
+#define GYRO_XG_ST (0x80) //activate gyro x axis self test
+#define GYRO_YG_ST (0x40) //activate gyro y axis self test
+#define GYRO_ZG_ST (0x20) //activate gyro z axis self test
 #define GYRO_FS_250_DIV (131.0f) //gyro scaler for 250 DPS
 #define GYRO_FS_500_DIV (65.5f) //gyro scaler for 500 DPS
 #define GYRO_FS_1000_DIV (32.8f) //gyro scaler for 1000 DPS
 #define GYRO_FS_2000_DIV (16.4f) //gyro scaler for 2000 DPS
+
+//self test registers
+#define REG_SELF_TEST_X (0x0D)
+#define XG_TEST_MASK (0x1F) //read these bits for test result
+#define REG_SELF_TEST_Y (0x0E)
+#define YG_TEST_MASK (0x1F) //read these bits for test result
+#define REG_SELF_TEST_Z (0x0F)
+#define ZG_TEST_MASK (0x1F) //read these bits for test result
 
 //Accelerometer config and self test activation register
 #define REG_ACCEL_CONFIG (0x1C)

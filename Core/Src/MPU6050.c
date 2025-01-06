@@ -198,3 +198,184 @@ float read_gyro_axis(uint8_t address, uint16_t scaler)
     float scaled = (float)combined / scaler;
     return scaled;
 }
+
+int16_t read_raw_gyro_axis(uint8_t address)
+{
+    uint8_t measureUpper = 0;
+    uint8_t measureLower = 0;
+    //upper portion of gyeo x
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        address,
+        SIZE_1_BYTE,
+        &measureUpper,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    //lower portion
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        address + 1,
+        SIZE_1_BYTE,
+        &measureLower,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
+    return combined;
+}
+
+/**
+ * Runs a self test on the gyro. Steps:
+ * 1. Set gyro's full scale range to 250dps
+ * 1. Save gyro's output with self test disabled (TD)
+ * 2. Enable self test register
+ * 3. Save gyro's output with self test enabled (TE)
+ * 4. SelfTestResponse (STR) = TE - TD
+ * 5. Get Factory Trim from G_Test register
+ * 6. Check if gyro passes self test
+ * 7. Revert gyroFS setting and turn off self tests
+ */
+FACTORY_TEST_RESULT gyro_self_test(void)
+{
+    //save old gyro full scale range
+    uint8_t gyroFS = 0;
+
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_GYRO_CONFIG,
+        SIZE_1_BYTE,
+        &gyroFS,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+    gyroFS &= GYRO_FS_SEL_MASK; //keep only the FS_SEL setting
+
+    //set gyro to 250 dps for test
+    MPU6050_REG_WRITE(REG_GYRO_CONFIG, GYRO_FS_SEL_250_DPS);
+
+    //wait
+    HAL_Delay(250);
+
+    //get gyro's output with self test disabled
+    int16_t TD[3]; //3 axis
+    TD[0] = read_raw_gyro_axis(REG_GYRO_X_MEASURE_1);
+    TD[1] = read_raw_gyro_axis(REG_GYRO_Y_MEASURE_1);
+    TD[2] = read_raw_gyro_axis(REG_GYRO_Z_MEASURE_1);
+
+    //enable self test, and datasheet requires gyro set to 250 DPS
+    MPU6050_REG_WRITE(
+        REG_GYRO_CONFIG, 
+        GYRO_FS_SEL_250_DPS | GYRO_XG_ST | GYRO_YG_ST | GYRO_ZG_ST
+    );
+
+    //wait
+    HAL_Delay(250);
+    
+    //get gyro's output with self test enabled
+    int16_t TE[3]; //3 axis
+    TE[0] = read_raw_gyro_axis(REG_GYRO_X_MEASURE_1);
+    TE[1] = read_raw_gyro_axis(REG_GYRO_Y_MEASURE_1);
+    TE[2] = read_raw_gyro_axis(REG_GYRO_Z_MEASURE_1);
+
+    //calculate the value of STR from the datasheet. This is
+    //different from reading the SELF_TEST (GTest) registers below
+    int16_t selfTestResponse[3];
+    selfTestResponse[0] = TE[0] - TD[0];
+    selfTestResponse[1] = TE[1] - TD[1];
+    selfTestResponse[2] = TE[2] - TD[2];
+    
+
+    //read self test registers
+    uint8_t GTest[3];
+
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_SELF_TEST_X,
+        SIZE_1_BYTE,
+        &GTest[0],
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_SELF_TEST_Y,
+        SIZE_1_BYTE,
+        &GTest[1],
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_SELF_TEST_Z,
+        SIZE_1_BYTE,
+        &GTest[2],
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    GTest[0] &= XG_TEST_MASK;
+    GTest[1] &= YG_TEST_MASK;
+    GTest[2] &= ZG_TEST_MASK;
+    
+    //calculate factory trims using self test registers
+    float factoryTrim[3];
+    factoryTrim[0] = 25.0f * 131.0f * powf(1.046f, (float)GTest[0] - 1.0f);
+    factoryTrim[1] = -25.0f * 131.0f * powf(1.046f, (float)GTest[1] - 1.0f); //y axis has -25.0 in datasheet
+    factoryTrim[2] = 25.0f * 131.0f * powf(1.046f, (float)GTest[2] - 1.0f);
+
+    //finally, calculate test results
+    float testResults[3];
+    testResults[0] = 100.0f * (((float)selfTestResponse[0] - factoryTrim[0]) / factoryTrim[0]);
+    testResults[1] = 100.0f * (((float)selfTestResponse[1] - factoryTrim[1]) / factoryTrim[1]);
+    testResults[2] = 100.0f * (((float)selfTestResponse[2] - factoryTrim[2]) / factoryTrim[2]);
+    
+    //report test results
+    char buff[100];
+    uint8_t buffSize = 0;
+
+    buffSize = sprintf(
+        buff,
+        "\r\nGyro X self test: %c, change from factory trim: %f%%", 
+        14.0f > testResults[0] && testResults[0] > -14.0f ? 'P' : 'F' , 
+        testResults[0]
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+    buff[0] = '\0';
+
+    buffSize = sprintf(
+        buff,
+        "\r\nGyro Y self test: %c, change from factory trim: %f%%", 
+        14.0f > testResults[1] && testResults[1] > -14.0f ? 'P' : 'F' , 
+        testResults[1]
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+    buff[0] = '\0';
+
+    buffSize = sprintf(
+        buff,
+        "\r\nGyro Z self test: %c, change from factory trim: %f%%", 
+        14.0f > testResults[2] && testResults[2] > -14.0f ? 'P' : 'F' , 
+        testResults[2]
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+    buff[0] = '\0';
+
+
+    //revert test setup
+    MPU6050_REG_WRITE(REG_GYRO_CONFIG, gyroFS);
+
+    
+    return FACTORY_TEST_PASS;
+}
+

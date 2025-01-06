@@ -108,10 +108,11 @@ int main(void)
   MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
 
   read_setup_registers();
+  gyro_self_test();
   const float samplingFreq = 100; //100Hz freq
   const float samplingPeriod = 1.0f / samplingFreq; //0.01s
   const int samplingPeriodMs = (int)S_TO_MS(samplingPeriod);
-  buffLen = sprintf(txBuff, "\raccelX,accelY,accelZ,gyroX,gyroY,gyroZ");
+  buffLen = sprintf(txBuff, "\r\naccelX,accelY,accelZ,gyroX,gyroY,gyroZ");
   HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, buffLen, 100);
   txBuff[0] = '\0';
   int i = 0;
