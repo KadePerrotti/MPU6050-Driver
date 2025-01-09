@@ -77,12 +77,26 @@ typedef enum
 /**
  * Runs a self test on the gyro. Steps:
  * 1. Set gyro's full scale range to 250dps
- * 1. Save gyro's output with self test disabled (TD)
- * 2. Enable self test register
- * 3. Save gyro's output with self test enabled (TE)
- * 4. SelfTestResponse (STR) = TE - TD
- * 5. 
+ * 2. Save gyro's output with self test disabled (TD)
+ * 3. Enable self test register
+ * 4. Save gyro's output with self test enabled (TE)
+ * 5. SelfTestResponse (STR) = TE - TD
+ * 6. Obtain Factory Trim values (FT)
+ * 7. Use FT and STR to determine if each axis has passed
  */
 FACTORY_TEST_RESULT gyro_self_test(void);
+
+
+/**
+ * Runs a self test on the accelerometer. Steps:
+ * 1. Set accelerometer's full scale range to 8g
+ * 2. Save accel output with self test disabled (TD)
+ * 3. Enable self test registers
+ * 4. Save accel output with self test enabled (TE)
+ * 5. SelfTestResponse (STR) = TE - TD
+ * 6. Obtain Factory Trim values (FT)
+ * 7. Use FT and STR to determine if each axis has passed
+ */
+FACTORY_TEST_RESULT accel_self_test(void);
 
 #endif /* INC_MPU6050_H_ */

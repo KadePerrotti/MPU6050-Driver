@@ -8,12 +8,27 @@
 
 void MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue)
 {
+    //todo: return the hal status
     HAL_I2C_Mem_Write(
         &hi2c1,
         MPU_6050_HAL_I2C_ADDR,
         regAddr,
         SIZE_1_BYTE,
         &regValue,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+}
+
+void MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr)
+{
+    //todo: return the hal status
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        regAddr,
+        SIZE_1_BYTE,
+        valAddr,
         SIZE_1_BYTE,
         HAL_I2C_TIMEOUT
     );
@@ -166,6 +181,36 @@ float read_accel_axis(uint8_t address, uint16_t scaler)
     int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
     float scaled = (float)combined / scaler;
     return scaled;
+}
+
+int16_t read_raw_accel_axis(uint8_t address)
+{
+    uint8_t measureUpper = 0;
+    uint8_t measureLower = 0;
+    //upper portion of accel 
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        address,
+        SIZE_1_BYTE,
+        &measureUpper,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    //lower portion
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        address + 1,
+        SIZE_1_BYTE,
+        &measureLower,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
+    return combined;
 }
 
 float read_gyro_axis(uint8_t address, uint16_t scaler)
@@ -379,3 +424,155 @@ FACTORY_TEST_RESULT gyro_self_test(void)
     return FACTORY_TEST_PASS;
 }
 
+FACTORY_TEST_RESULT accel_self_test(void)
+{
+    //save old accel full scale range
+    uint8_t accelFS = 0;
+
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_ACCEL_CONFIG,
+        SIZE_1_BYTE,
+        &accelFS,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+    accelFS &= ACCEL_FS_SEL_MASK; //keep only the FS_SEL setting
+
+    //set accel to 8g for test
+    MPU6050_REG_WRITE(REG_ACCEL_CONFIG, ACCEL_FS_8G);
+
+    //wait
+    HAL_Delay(250);
+
+    //get accels's output with self test disabled
+    int16_t TD[3]; //3 axis
+    TD[0] = read_raw_accel_axis(REG_ACCEL_X_MEASURE_1);
+    TD[1] = read_raw_accel_axis(REG_ACCEL_Y_MEASURE_1);
+    TD[2] = read_raw_accel_axis(REG_ACCEL_Z_MEASURE_1);
+
+    //enable self test, and datasheet requires accel set to 8g
+    MPU6050_REG_WRITE(
+        REG_ACCEL_CONFIG, 
+        ACCEL_FS_8G | ACCEL_XA_ST | ACCEL_YA_ST | ACCEL_ZA_ST
+    );
+
+    //wait
+    HAL_Delay(250);
+    
+    //get accels's output with self test enabled
+    int16_t TE[3]; //3 axis
+    TE[0] = read_raw_accel_axis(REG_ACCEL_X_MEASURE_1);
+    TE[1] = read_raw_accel_axis(REG_ACCEL_Y_MEASURE_1);
+    TE[2] = read_raw_accel_axis(REG_ACCEL_Z_MEASURE_1);
+
+    //calculate the value of STR from the datasheet. This is
+    //different from reading the SELF_TEST (ATest) registers below
+    int16_t selfTestResponse[3];
+    selfTestResponse[0] = TE[0] - TD[0];
+    selfTestResponse[1] = TE[1] - TD[1];
+    selfTestResponse[2] = TE[2] - TD[2];
+    
+
+    //read self test registers, each axis is 5 bits, split across two registers
+    uint8_t ATestUpper[3]; //more significant portion
+    uint8_t SELF_TEST_A; //less significant portion
+
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_SELF_TEST_X,
+        SIZE_1_BYTE,
+        &ATestUpper[0],
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_SELF_TEST_Y,
+        SIZE_1_BYTE,
+        &ATestUpper[1],
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_SELF_TEST_Z,
+        SIZE_1_BYTE,
+        &ATestUpper[2],
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    //lower
+    HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        REG_SELF_TEST_A,
+        SIZE_1_BYTE,
+        &SELF_TEST_A,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+
+    //final combined accel test values
+    uint8_t ATest[3];
+    ATest[0] = ((ATestUpper[0] & XA_TEST_UPPER_MASK) >> 3) | ((SELF_TEST_A & XA_TEST_LOWER_MASK) >> 4);
+    ATest[1] = ((ATestUpper[1] & YA_TEST_UPPER_MASK) >> 3) | ((SELF_TEST_A & YA_TEST_LOWER_MASK) >> 2);
+    ATest[2] = ((ATestUpper[2] & ZA_TEST_UPPER_MASK) >> 3) | (SELF_TEST_A & ZA_TEST_LOWER_MASK);
+    
+    //calculate factory trims using self test registers
+    float factoryTrim[3];
+    factoryTrim[0] = 4096.0f * 0.34f * powf((0.92f/0.34f), ((float)ATest[0] - 1) / 30.0f);
+    factoryTrim[1] = 4096.0f * 0.34f * powf((0.92f/0.34f), ((float)ATest[1] - 1) / 30.0f);
+    factoryTrim[2] = 4096.0f * 0.34f * powf((0.92f/0.34f), ((float)ATest[1] - 1) / 30.0f);
+
+    //finally, calculate test results
+    float testResults[3];
+    testResults[0] = 100.0f * (((float)selfTestResponse[0] - factoryTrim[0]) / factoryTrim[0]);
+    testResults[1] = 100.0f * (((float)selfTestResponse[1] - factoryTrim[1]) / factoryTrim[1]);
+    testResults[2] = 100.0f * (((float)selfTestResponse[2] - factoryTrim[2]) / factoryTrim[2]);
+    
+    //report test results
+    char buff[100];
+    uint8_t buffSize = 0;
+
+    buffSize = sprintf(
+        buff,
+        "\r\nAccel X self test: %c, change from factory trim: %f%%", 
+        14.0f > testResults[0] && testResults[0] > -14.0f ? 'P' : 'F' , 
+        testResults[0]
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+    buff[0] = '\0';
+
+    buffSize = sprintf(
+        buff,
+        "\r\nAccel Y self test: %c, change from factory trim: %f%%", 
+        14.0f > testResults[1] && testResults[1] > -14.0f ? 'P' : 'F' , 
+        testResults[1]
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+    buff[0] = '\0';
+
+    buffSize = sprintf(
+        buff,
+        "\r\nAccel Z self test: %c, change from factory trim: %f%%", 
+        14.0f > testResults[2] && testResults[2] > -14.0f ? 'P' : 'F' , 
+        testResults[2]
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+    buff[0] = '\0';
+
+
+    //revert test setup
+    MPU6050_REG_WRITE(REG_ACCEL_CONFIG, accelFS);
+
+    
+    return FACTORY_TEST_PASS;
+}

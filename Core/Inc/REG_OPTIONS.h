@@ -86,14 +86,27 @@
 
 //self test registers
 #define REG_SELF_TEST_X (0x0D)
-#define XG_TEST_MASK (0x1F) //read these bits for test result
+#define XG_TEST_MASK (0x1F)
+#define XA_TEST_UPPER_MASK (0xE0)
 #define REG_SELF_TEST_Y (0x0E)
-#define YG_TEST_MASK (0x1F) //read these bits for test result
+#define YG_TEST_MASK (0x1F)
+#define YA_TEST_UPPER_MASK (0xE0)
 #define REG_SELF_TEST_Z (0x0F)
-#define ZG_TEST_MASK (0x1F) //read these bits for test result
+#define ZG_TEST_MASK (0x1F)
+#define ZA_TEST_UPPER_MASK (0xE0)
+
+//accelerometer less significant portion of self test
+#define REG_SELF_TEST_A (0x10) 
+#define XA_TEST_LOWER_MASK (0x30)
+#define YA_TEST_LOWER_MASK (0x0C)
+#define ZA_TEST_LOWER_MASK (0x03)
 
 //Accelerometer config and self test activation register
 #define REG_ACCEL_CONFIG (0x1C)
+#define ACCEL_XA_ST (0x80) //activate accel self tests
+#define ACCEL_YA_ST (0x40)
+#define ACCEL_ZA_ST (0x20)
+#define ACCEL_FS_SEL_MASK (0x18)
 #define ACCEL_FS_2G (0x0) //Accel full scale range +-2g
 #define ACCEL_FS_4G (0x1 << 3) //Accel full scale range +-4g
 #define ACCEL_FS_8G (0x2 << 3) //Accel full scale range +-8g

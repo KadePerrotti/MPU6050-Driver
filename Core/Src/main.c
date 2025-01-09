@@ -107,8 +107,9 @@ int main(void)
   //setup the sample rate divider
   MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
 
-  read_setup_registers();
   gyro_self_test();
+  accel_self_test();
+  read_setup_registers();
   const float samplingFreq = 100; //100Hz freq
   const float samplingPeriod = 1.0f / samplingFreq; //0.01s
   const int samplingPeriodMs = (int)S_TO_MS(samplingPeriod);
