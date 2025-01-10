@@ -50,6 +50,12 @@ void read_setup_registers(void);
 void MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue);
 
 /**
+ * Wrapper around HAL_I2C_Mem_Read
+ * //todo add return
+ */
+void MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr);
+
+/**
  * Accelerometer readings are 2 bytes, stored in two registers on the
  * MPU6050. Reads both, then combines and scales value.
  * @param address: most significant accel axis register
@@ -67,6 +73,12 @@ float read_accel_axis(uint8_t address, uint16_t scaler);
  */
 float read_gyro_axis(uint8_t address, uint16_t scaler);
 
+/**
+ * Get the raw reading from any of the accelerometer or gyro axes
+ * @param address: most significant axis register
+ * @return the raw axis measurement. 
+ */
+int16_t read_raw_axis(uint8_t address);
 
 typedef enum 
 {

@@ -64,15 +64,7 @@ void read_setup_registers(void)
     int uart_buf_len = 0;
 
     //config register
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_CONFIG,
-        SIZE_1_BYTE,
-        &readBuff,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
+    MPU6050_REG_READ(REG_CONFIG, &readBuff);
     uint8_t fsync_val = readBuff & 0x38;
     uint8_t dlpf_val = readBuff & 0x7;
     uart_buf_len = sprintf(
@@ -88,15 +80,7 @@ void read_setup_registers(void)
     readBuff = 0;
 
     //gyro config
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_GYRO_CONFIG,
-        SIZE_1_BYTE,
-        &readBuff,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
+    MPU6050_REG_READ(REG_GYRO_CONFIG, &readBuff);
     uint8_t gyro_sel = readBuff & 0x18;
     uart_buf_len = sprintf(
         txBuff, 
@@ -109,15 +93,7 @@ void read_setup_registers(void)
     readBuff = 0;
 
     //accelerometer config register
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_ACCEL_CONFIG,
-        SIZE_1_BYTE,
-        &readBuff,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
+    MPU6050_REG_READ(REG_ACCEL_CONFIG, &readBuff);
     uint8_t fs_val = readBuff & 0x18;
     uart_buf_len = sprintf(
         txBuff, 
@@ -130,15 +106,7 @@ void read_setup_registers(void)
     readBuff = 0;
 
     //sample rate divider
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_SMPRT_DIV,
-        SIZE_1_BYTE,
-        &readBuff,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
+    MPU6050_REG_READ(REG_SMPRT_DIV, &readBuff);
     uint8_t rate_div = readBuff & 0xFF;
     uart_buf_len = sprintf(
         txBuff, 
@@ -154,125 +122,33 @@ void read_setup_registers(void)
 
 float read_accel_axis(uint8_t address, uint16_t scaler)
 {
-    uint8_t measureUpper = 0;
-    uint8_t measureLower = 0;
-    //upper portion of accel 
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        address,
-        SIZE_1_BYTE,
-        &measureUpper,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    //lower portion
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        address + 1,
-        SIZE_1_BYTE,
-        &measureLower,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
-    float scaled = (float)combined / scaler;
+    int16_t rawReading = read_raw_axis(address);
+    float scaled = (float)rawReading / scaler;
     return scaled;
-}
-
-int16_t read_raw_accel_axis(uint8_t address)
-{
-    uint8_t measureUpper = 0;
-    uint8_t measureLower = 0;
-    //upper portion of accel 
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        address,
-        SIZE_1_BYTE,
-        &measureUpper,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    //lower portion
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        address + 1,
-        SIZE_1_BYTE,
-        &measureLower,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
-    return combined;
 }
 
 float read_gyro_axis(uint8_t address, uint16_t scaler)
 {
-    uint8_t measureUpper = 0;
-    uint8_t measureLower = 0;
-    //upper portion of gyeo x
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        address,
-        SIZE_1_BYTE,
-        &measureUpper,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    //lower portion
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        address + 1,
-        SIZE_1_BYTE,
-        &measureLower,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
-    float scaled = (float)combined / scaler;
+    int16_t rawReading = read_raw_axis(address);
+    float scaled = (float)rawReading / scaler;
     return scaled;
 }
 
-int16_t read_raw_gyro_axis(uint8_t address)
+int16_t read_raw_axis(uint8_t address)
 {
     uint8_t measureUpper = 0;
     uint8_t measureLower = 0;
-    //upper portion of gyeo x
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        address,
-        SIZE_1_BYTE,
-        &measureUpper,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
+    
+    //upper portion of accel 
+    MPU6050_REG_READ(address, &measureUpper);
+    
     //lower portion
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        address + 1,
-        SIZE_1_BYTE,
-        &measureLower,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
+    MPU6050_REG_READ(address + 1, &measureLower);
+    
     int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
     return combined;
 }
+
 
 /**
  * Runs a self test on the gyro. Steps:
@@ -288,18 +164,11 @@ int16_t read_raw_gyro_axis(uint8_t address)
 FACTORY_TEST_RESULT gyro_self_test(void)
 {
     //save old gyro full scale range
-    uint8_t gyroFS = 0;
+    uint8_t gyroFs = 0;
 
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_GYRO_CONFIG,
-        SIZE_1_BYTE,
-        &gyroFS,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-    gyroFS &= GYRO_FS_SEL_MASK; //keep only the FS_SEL setting
+    MPU6050_REG_READ(REG_GYRO_CONFIG, &gyroFs);
+    
+    gyroFs &= GYRO_FS_SEL_MASK; //keep only the FS_SEL setting
 
     //set gyro to 250 dps for test
     MPU6050_REG_WRITE(REG_GYRO_CONFIG, GYRO_FS_SEL_250_DPS);
@@ -309,9 +178,9 @@ FACTORY_TEST_RESULT gyro_self_test(void)
 
     //get gyro's output with self test disabled
     int16_t TD[3]; //3 axis
-    TD[0] = read_raw_gyro_axis(REG_GYRO_X_MEASURE_1);
-    TD[1] = read_raw_gyro_axis(REG_GYRO_Y_MEASURE_1);
-    TD[2] = read_raw_gyro_axis(REG_GYRO_Z_MEASURE_1);
+    TD[0] = read_raw_axis(REG_GYRO_X_MEASURE_1);
+    TD[1] = read_raw_axis(REG_GYRO_Y_MEASURE_1);
+    TD[2] = read_raw_axis(REG_GYRO_Z_MEASURE_1);
 
     //enable self test, and datasheet requires gyro set to 250 DPS
     MPU6050_REG_WRITE(
@@ -324,9 +193,9 @@ FACTORY_TEST_RESULT gyro_self_test(void)
     
     //get gyro's output with self test enabled
     int16_t TE[3]; //3 axis
-    TE[0] = read_raw_gyro_axis(REG_GYRO_X_MEASURE_1);
-    TE[1] = read_raw_gyro_axis(REG_GYRO_Y_MEASURE_1);
-    TE[2] = read_raw_gyro_axis(REG_GYRO_Z_MEASURE_1);
+    TE[0] = read_raw_axis(REG_GYRO_X_MEASURE_1);
+    TE[1] = read_raw_axis(REG_GYRO_Y_MEASURE_1);
+    TE[2] = read_raw_axis(REG_GYRO_Z_MEASURE_1);
 
     //calculate the value of STR from the datasheet. This is
     //different from reading the SELF_TEST (GTest) registers below
@@ -339,35 +208,9 @@ FACTORY_TEST_RESULT gyro_self_test(void)
     //read self test registers
     uint8_t GTest[3];
 
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_SELF_TEST_X,
-        SIZE_1_BYTE,
-        &GTest[0],
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_SELF_TEST_Y,
-        SIZE_1_BYTE,
-        &GTest[1],
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_SELF_TEST_Z,
-        SIZE_1_BYTE,
-        &GTest[2],
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
+    MPU6050_REG_READ(REG_SELF_TEST_X, &GTest[0]);
+    MPU6050_REG_READ(REG_SELF_TEST_Y, &GTest[1]);
+    MPU6050_REG_READ(REG_SELF_TEST_Z, &GTest[2]);
 
     GTest[0] &= XG_TEST_MASK;
     GTest[1] &= YG_TEST_MASK;
@@ -418,7 +261,7 @@ FACTORY_TEST_RESULT gyro_self_test(void)
 
 
     //revert test setup
-    MPU6050_REG_WRITE(REG_GYRO_CONFIG, gyroFS);
+    MPU6050_REG_WRITE(REG_GYRO_CONFIG, gyroFs);
 
     
     return FACTORY_TEST_PASS;
@@ -427,18 +270,11 @@ FACTORY_TEST_RESULT gyro_self_test(void)
 FACTORY_TEST_RESULT accel_self_test(void)
 {
     //save old accel full scale range
-    uint8_t accelFS = 0;
+    uint8_t accelFs = 0;
 
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_ACCEL_CONFIG,
-        SIZE_1_BYTE,
-        &accelFS,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-    accelFS &= ACCEL_FS_SEL_MASK; //keep only the FS_SEL setting
+    MPU6050_REG_READ(REG_ACCEL_CONFIG, &accelFs);
+    
+    accelFs &= ACCEL_FS_SEL_MASK; //keep only the FS_SEL setting
 
     //set accel to 8g for test
     MPU6050_REG_WRITE(REG_ACCEL_CONFIG, ACCEL_FS_8G);
@@ -448,9 +284,9 @@ FACTORY_TEST_RESULT accel_self_test(void)
 
     //get accels's output with self test disabled
     int16_t TD[3]; //3 axis
-    TD[0] = read_raw_accel_axis(REG_ACCEL_X_MEASURE_1);
-    TD[1] = read_raw_accel_axis(REG_ACCEL_Y_MEASURE_1);
-    TD[2] = read_raw_accel_axis(REG_ACCEL_Z_MEASURE_1);
+    TD[0] = read_raw_axis(REG_ACCEL_X_MEASURE_1);
+    TD[1] = read_raw_axis(REG_ACCEL_Y_MEASURE_1);
+    TD[2] = read_raw_axis(REG_ACCEL_Z_MEASURE_1);
 
     //enable self test, and datasheet requires accel set to 8g
     MPU6050_REG_WRITE(
@@ -463,9 +299,9 @@ FACTORY_TEST_RESULT accel_self_test(void)
     
     //get accels's output with self test enabled
     int16_t TE[3]; //3 axis
-    TE[0] = read_raw_accel_axis(REG_ACCEL_X_MEASURE_1);
-    TE[1] = read_raw_accel_axis(REG_ACCEL_Y_MEASURE_1);
-    TE[2] = read_raw_accel_axis(REG_ACCEL_Z_MEASURE_1);
+    TE[0] = read_raw_axis(REG_ACCEL_X_MEASURE_1);
+    TE[1] = read_raw_axis(REG_ACCEL_Y_MEASURE_1);
+    TE[2] = read_raw_axis(REG_ACCEL_Z_MEASURE_1);
 
     //calculate the value of STR from the datasheet. This is
     //different from reading the SELF_TEST (ATest) registers below
@@ -479,46 +315,13 @@ FACTORY_TEST_RESULT accel_self_test(void)
     uint8_t ATestUpper[3]; //more significant portion
     uint8_t SELF_TEST_A; //less significant portion
 
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_SELF_TEST_X,
-        SIZE_1_BYTE,
-        &ATestUpper[0],
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_SELF_TEST_Y,
-        SIZE_1_BYTE,
-        &ATestUpper[1],
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_SELF_TEST_Z,
-        SIZE_1_BYTE,
-        &ATestUpper[2],
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
-
-    //lower
-    HAL_I2C_Mem_Read(
-        &hi2c1, 
-        MPU_6050_HAL_I2C_ADDR,
-        REG_SELF_TEST_A,
-        SIZE_1_BYTE,
-        &SELF_TEST_A,
-        SIZE_1_BYTE,
-        HAL_I2C_TIMEOUT
-    );
+    //upper 3 bits
+    MPU6050_REG_READ(REG_SELF_TEST_X, &ATestUpper[0]);
+    MPU6050_REG_READ(REG_SELF_TEST_Y, &ATestUpper[1]);
+    MPU6050_REG_READ(REG_SELF_TEST_Z, &ATestUpper[2]);
+    
+    //lower 2 bits
+    MPU6050_REG_READ(REG_SELF_TEST_A, &SELF_TEST_A);
 
     //final combined accel test values
     uint8_t ATest[3];
@@ -571,7 +374,7 @@ FACTORY_TEST_RESULT accel_self_test(void)
 
 
     //revert test setup
-    MPU6050_REG_WRITE(REG_ACCEL_CONFIG, accelFS);
+    MPU6050_REG_WRITE(REG_ACCEL_CONFIG, accelFs);
 
     
     return FACTORY_TEST_PASS;
