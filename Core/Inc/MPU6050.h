@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "i2c.h"
 #include "usart.h"
 
@@ -49,6 +50,12 @@ void read_setup_registers(void);
 void MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue);
 
 /**
+ * Wrapper around HAL_I2C_Mem_Read
+ * //todo add return
+ */
+void MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr);
+
+/**
  * Accelerometer readings are 2 bytes, stored in two registers on the
  * MPU6050. Reads both, then combines and scales value.
  * @param address: most significant accel axis register
@@ -65,4 +72,43 @@ float read_accel_axis(uint8_t address, uint16_t scaler);
  * @return The gyro measurement in DPS (degrees per second)
  */
 float read_gyro_axis(uint8_t address, uint16_t scaler);
+
+/**
+ * Get the raw reading from any of the accelerometer or gyro axes
+ * @param address: most significant axis register
+ * @return the raw axis measurement. 
+ */
+int16_t read_raw_axis(uint8_t address);
+
+typedef enum 
+{
+    FACTORY_TEST_PASS = 0,
+    FACTORY_TEST_FAIL = -1
+} FACTORY_TEST_RESULT;
+
+/**
+ * Runs a self test on the gyro. Steps:
+ * 1. Set gyro's full scale range to 250dps
+ * 2. Save gyro's output with self test disabled (TD)
+ * 3. Enable self test register
+ * 4. Save gyro's output with self test enabled (TE)
+ * 5. SelfTestResponse (STR) = TE - TD
+ * 6. Obtain Factory Trim values (FT)
+ * 7. Use FT and STR to determine if each axis has passed
+ */
+FACTORY_TEST_RESULT gyro_self_test(void);
+
+
+/**
+ * Runs a self test on the accelerometer. Steps:
+ * 1. Set accelerometer's full scale range to 8g
+ * 2. Save accel output with self test disabled (TD)
+ * 3. Enable self test registers
+ * 4. Save accel output with self test enabled (TE)
+ * 5. SelfTestResponse (STR) = TE - TD
+ * 6. Obtain Factory Trim values (FT)
+ * 7. Use FT and STR to determine if each axis has passed
+ */
+FACTORY_TEST_RESULT accel_self_test(void);
+
 #endif /* INC_MPU6050_H_ */
