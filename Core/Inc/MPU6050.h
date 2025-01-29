@@ -15,6 +15,7 @@
 #include <math.h>
 #include "i2c.h"
 #include "usart.h"
+#include "stm32l4xx_hal.h"
 
 
 
@@ -23,6 +24,14 @@
 #define HAL_I2C_TIMEOUT (100)
 
 #define S_TO_MS(s) (s * 1000)
+
+#define BYTES_PER_MEASURE (2) //gyro, accel, temp measurements are 2 bytes each
+
+#define FIFO_SIZE (1024) //size of fifo in bytes
+
+//macro to turn raw data into a gyro or accel reading
+#define TRANSFORM(upper, lower, scaler) \
+    ((int16_t)(((uint16_t)upper << 8) | lower)) / (float)scaler;
 
 /**
  * Sets configuration registers to default values
@@ -54,6 +63,8 @@ void MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue);
  * //todo add return
  */
 void MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr);
+
+void MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes);
 
 /**
  * Accelerometer readings are 2 bytes, stored in two registers on the
@@ -110,5 +121,35 @@ FACTORY_TEST_RESULT gyro_self_test(void);
  * 7. Use FT and STR to determine if each axis has passed
  */
 FACTORY_TEST_RESULT accel_self_test(void);
+
+/**
+ * testing function that reads each gyro and accel axis individually
+ * from the individual register, then does a debug print
+ */
+void poll_axes_individually(void);
+
+/**
+ * Helper function to read the number of bytes currently in the fifo
+ * Reads REG_FIFO_COUNT_H first, then REG_FIFO_COUNT_L, and concatenates
+ * them
+ */
+uint16_t read_fifo_count();
+
+/**
+ * Periodically checks the fifo count. Uses readPeriod, sampleRate, and
+ * numAxes to determine if the count matches the expected count.
+ * @param readPeriodMs: How often to check the fifo count
+ * @param sampleRate: rate at which an axis is written to the fifo
+ * @param numAxes: Number of axis being written to the fifo (gyro and accel each have 3)
+ */
+void fifo_count_test(uint16_t readPeriodMs, uint16_t sampleRate, uint8_t numAxes);
+
+/**
+ * Periodically read the fifo. Convert raw data into gyro and accel readings
+ * and print
+ * Note: Expects the fifo to be collecting data from all 6 imu axes
+ * @param readPeriodMs: How often to read the fifo
+ */
+void read_fifo_test(uint16_t readPeriodMs);
 
 #endif /* INC_MPU6050_H_ */

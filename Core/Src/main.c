@@ -66,10 +66,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-  char txBuff[100];
-  int numSamples = 6 * 5 * 100; //6 axis * 5 seconds * 100 samples/sec
-  float samples[numSamples];
-  uint8_t buffLen = 0;
+  
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -107,62 +104,76 @@ int main(void)
   //setup the sample rate divider
   MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
 
+  
+
+  //enable the fifo
+  MPU6050_REG_WRITE(REG_USER_CTRL, FIFO_EN);
+  HAL_Delay(100);
+  
+
+  
+
+  
+
+
   gyro_self_test();
   accel_self_test();
   read_setup_registers();
-  const float samplingFreq = 100; //100Hz freq
-  const float samplingPeriod = 1.0f / samplingFreq; //0.01s
-  const int samplingPeriodMs = (int)S_TO_MS(samplingPeriod);
-  buffLen = sprintf(txBuff, "\r\naccelX,accelY,accelZ,gyroX,gyroY,gyroZ");
-  HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, buffLen, 100);
-  txBuff[0] = '\0';
-  int i = 0;
+  //poll_axes_individually();
+
+  //3 gyro axes at 100Hz for 1 sec
+  MPU6050_REG_WRITE(REG_FIFO_EN, XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  fifo_count_test(1000, 100, 3);
+
+  //3 accel axes at 100Hz for 1 sec
+  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN);
+  fifo_count_test(1000, 100, 3);
+
+  //6 axes at 100Hz for 2 sec (should fail)
+  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  fifo_count_test(2000, 100, 6);
+
+  //3 accel axes at 100Hz for 2 sec (should fail)
+  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN);
+  fifo_count_test(2000, 100, 3);
+
+  //6 axes at 100Hz for 350ms
+  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  fifo_count_test(350, 100, 6);
+  
+  //6 axes at 50Hz for 800ms
+  MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_50Hz);
+  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  fifo_count_test(800, 50, 6);
+
+  //6 axes at 200Hz for 200ms
+  MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_200Hz);
+  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  fifo_count_test(200, 200, 6);
+
+  //seems like the fifo doesn't like to work if it gets filled with much more than 600 bytes?
+  MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
+  MPU6050_REG_WRITE(REG_FIFO_EN, 0); //disable fifo for poll axis test
+  poll_axes_individually();
+  
+  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  read_fifo_test(500);
+
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (i < numSamples)
+  while (1)
   {
     /* USER CODE END WHILE */
-    int startRead = HAL_GetTick();
-    float accelX = read_accel_axis(REG_ACCEL_X_MEASURE_1, ACCEL_FS_2_DIV);
-    samples[i++] = accelX;
     
-    float accelY = read_accel_axis(REG_ACCEL_Y_MEASURE_1, ACCEL_FS_2_DIV);
-    samples[i++] = accelY;
-    
-    float accelZ = read_accel_axis(REG_ACCEL_Z_MEASURE_1, ACCEL_FS_2_DIV);
-    samples[i++] = accelZ;
-
-    float gyroX = read_gyro_axis(REG_GYRO_X_MEASURE_1, GYRO_FS_250_DIV);
-    samples[i++] = gyroX;
-
-    float gyroY = read_gyro_axis(REG_GYRO_Y_MEASURE_1, GYRO_FS_250_DIV);
-    samples[i++] = gyroY;
-
-    float gyroZ = read_gyro_axis(REG_GYRO_Z_MEASURE_1, GYRO_FS_250_DIV);
-    samples[i++] = gyroZ;
-
-
-    int endRead = HAL_GetTick();
-    int totalTime = endRead - startRead; //ms
-    HAL_Delay(samplingPeriodMs - totalTime);
 
     /* USER CODE BEGIN 3 */
   }
   
-  //write data out to uart
-  i = 0;
-  while(i < numSamples)
-  {
-    buffLen = sprintf(txBuff, "\r\n%.2f,%.2f,%.2f,%.2f,%.2f,%.2f", 
-      samples[i], samples[i + 1], samples[i + 2], //accel xyz
-      samples[i + 3], samples[i + 4], samples[i + 5] //gyro xyz
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, buffLen, 100);
-    txBuff[0] = '\0';
-    i += 6;
-  }
+  
   /* USER CODE END 3 */
 }
 
