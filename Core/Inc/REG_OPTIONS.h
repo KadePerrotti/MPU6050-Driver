@@ -154,8 +154,13 @@
 #define REG_FIFO_COUNT_H (0x72)
 #define REG_FIFO_COUNT_L (0x73)
 
+//Read this register repeatedly to get fifo data
 //not sure why you'd want to write to the fifo
 #define REG_FIFO_R_W (0x74)
 
+//Enable available interrupt types
+#define REG_INT_ENABLE (0x38)
+#define FIFO_OFLOW_EN (0x10) //fifo buffer overflow will generate an interrupt
+#define DATA_RDY_EN (0x01) //setting this bit enables an interrupt that is generated each time the sensor registers are written to
 
 #endif /* INC_REG_OPTIONS_H_ */
