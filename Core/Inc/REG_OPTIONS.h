@@ -19,9 +19,10 @@
 #define REG_WHO_AM_I (0x75)
 
 #define REG_USER_CTRL (0x6A)
-#define FIFO_RESET (0x4)
-#define I2C_MST_RESET (0x2)
-#define SIG_COND_RESET (0x1)
+#define FIFO_EN (0x40) //note: datasheet states that mpu6050 must be powercycled to change fifo state
+#define FIFO_RESET (0x04)//note: datasheet states this only resets fifo if FIFO_EN equals 0
+#define I2C_MST_RESET (0x02)
+#define SIG_COND_RESET (0x01)
 
 //Power mode and clock source (internal, external, gyro(?))
 #define REG_PWR_MGMT_1 (0x6B)
@@ -50,7 +51,9 @@
  * off
  */
 #define REG_SMPRT_DIV (0x19)
+#define SAMPLE_RATE_50Hz (0x13) 
 #define SAMPLE_RATE_100Hz (0x9) //Gyro rate = 1KHz when DLPF enabled
+#define SAMPLE_RATE_200Hz (0x4)
 
 /**
  * Digital low pass and external Frame Synchronization Configuration:
@@ -116,6 +119,17 @@
 #define ACCEL_FS_8_DIV (4096.0f) //accel scaler for 8g
 #define ACCEL_FS_16_DIV (2048.0f) //accel scaler for 16g
 
+//Fifo enable regester. Controls which sensor 
+//outputs are written to the Fifo buffer
+#define REG_FIFO_EN (0x23)
+#define TEMP_FIFO_EN (0x80)
+#define XG_FIFO_EN (0x40)
+#define YG_FIFO_EN (0x20)
+#define ZG_FIFO_EN (0x10)
+#define ACCEL_FIFO_EN (0x08) //setting this bit causes all accel axes to be placed in the buffer. 
+
+
+
 #define REG_ACCEL_X_MEASURE_1 (0x3B) //[15:8]
 #define REG_ACCEL_X_MEASURE_2 (0x3C) //[7:0]
 
@@ -133,5 +147,20 @@
 
 #define REG_GYRO_Z_MEASURE_1 (0x47) //[15:8]
 #define REG_GYRO_Z_MEASURE_2 (0x48) //[7:0]
+
+//Track the number of bytes currently in the FIFO buffer
+//FIFO_COUNT_H MUST be read first for an accurate byte count
+//16 bit unsigned value
+#define REG_FIFO_COUNT_H (0x72)
+#define REG_FIFO_COUNT_L (0x73)
+
+//Read this register repeatedly to get fifo data
+//not sure why you'd want to write to the fifo
+#define REG_FIFO_R_W (0x74)
+
+//Enable available interrupt types
+#define REG_INT_ENABLE (0x38)
+#define FIFO_OFLOW_EN (0x10) //fifo buffer overflow will generate an interrupt
+#define DATA_RDY_EN (0x01) //setting this bit enables an interrupt that is generated each time the sensor registers are written to
 
 #endif /* INC_REG_OPTIONS_H_ */
