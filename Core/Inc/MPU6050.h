@@ -35,6 +35,7 @@
 
 
 typedef int MPU6050_REG_READ_TYPE(uint16_t, uint8_t*);
+typedef int MPU6050_BURST_READ_TYPE(uint16_t, uint8_t*, uint16_t);
 typedef int MPU6050_REG_WRITE_TYPE(uint16_t, uint8_t);
 
 /**
@@ -68,7 +69,7 @@ int MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue);
  */
 int MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr);
 
-void MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes);
+int MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes);
 
 /**
  * Accelerometer readings are 2 bytes, stored in two registers on the
@@ -77,7 +78,7 @@ void MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes);
  * @param scaler: scale the raw measurement to the expected unit
  * @return The accel measurement in G (9.8m/s^2)
  */
-float read_accel_axis(uint8_t address, uint16_t scaler);
+float read_accel_axis(uint8_t address, uint16_t scaler, MPU6050_REG_READ_TYPE readReg);
 
 /**
  * Gyroscope readings are 2 bytes, stored in two registers on the
@@ -86,14 +87,14 @@ float read_accel_axis(uint8_t address, uint16_t scaler);
  * @param scaler: scale the raw measurement to the expected unit
  * @return The gyro measurement in DPS (degrees per second)
  */
-float read_gyro_axis(uint8_t address, uint16_t scaler);
+float read_gyro_axis(uint8_t address, uint16_t scaler, MPU6050_REG_READ_TYPE readReg);
 
 /**
  * Get the raw reading from any of the accelerometer or gyro axes
  * @param address: most significant axis register
  * @return the raw axis measurement. 
  */
-int16_t read_raw_axis(uint8_t address);
+int16_t read_raw_axis(uint8_t address, MPU6050_REG_READ_TYPE readReg);
 
 typedef enum 
 {
@@ -111,7 +112,7 @@ typedef enum
  * 6. Obtain Factory Trim values (FT)
  * 7. Use FT and STR to determine if each axis has passed
  */
-FACTORY_TEST_RESULT gyro_self_test(void);
+FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg);
 
 
 /**
@@ -124,20 +125,20 @@ FACTORY_TEST_RESULT gyro_self_test(void);
  * 6. Obtain Factory Trim values (FT)
  * 7. Use FT and STR to determine if each axis has passed
  */
-FACTORY_TEST_RESULT accel_self_test(void);
+FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg);
 
 /**
  * testing function that reads each gyro and accel axis individually
  * from the individual register, then does a debug print
  */
-void poll_axes_individually(void);
+void poll_axes_individually(MPU6050_REG_READ_TYPE readReg);
 
 /**
  * Helper function to read the number of bytes currently in the fifo
  * Reads REG_FIFO_COUNT_H first, then REG_FIFO_COUNT_L, and concatenates
  * them
  */
-uint16_t read_fifo_count();
+uint16_t read_fifo_count(MPU6050_REG_READ_TYPE readReg);
 
 /**
  * Periodically checks the fifo count. Uses readPeriod, sampleRate, and
@@ -146,7 +147,7 @@ uint16_t read_fifo_count();
  * @param sampleRate: rate at which an axis is written to the fifo
  * @param numAxes: Number of axis being written to the fifo (gyro and accel each have 3)
  */
-void fifo_count_test(uint16_t readPeriodMs, uint16_t sampleRate, uint8_t numAxes);
+void fifo_count_test(uint16_t readPeriodMs, uint16_t sampleRate, uint8_t numAxes, MPU6050_BURST_READ_TYPE burstRead, MPU6050_REG_READ_TYPE readReg);
 
 /**
  * Periodically read the fifo. Convert raw data into gyro and accel readings
@@ -154,6 +155,6 @@ void fifo_count_test(uint16_t readPeriodMs, uint16_t sampleRate, uint8_t numAxes
  * Note: Expects the fifo to be collecting data from all 6 imu axes
  * @param readPeriodMs: How often to read the fifo
  */
-void read_fifo_test(uint16_t readPeriodMs);
+void read_fifo_test(uint16_t readPeriodMs, MPU6050_BURST_READ_TYPE burstRead, MPU6050_REG_READ_TYPE readReg);
 
 #endif /* INC_MPU6050_H_ */

@@ -36,7 +36,7 @@ int MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr)
     return 0;
 }
 
-void MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes)
+int MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes)
 {
      //todo: return the hal status
     HAL_I2C_Mem_Read(
@@ -48,6 +48,7 @@ void MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes)
         bytes,
         HAL_I2C_TIMEOUT
     );
+    return 0;
 }
 
 uint16_t init_mpu6050(MPU6050_REG_WRITE_TYPE writeReg)
@@ -136,30 +137,30 @@ void read_setup_registers(MPU6050_REG_READ_TYPE readReg)
 }
 
 
-float read_accel_axis(uint8_t address, uint16_t scaler)
+float read_accel_axis(uint8_t address, uint16_t scaler, MPU6050_REG_READ_TYPE readReg)
 {
-    int16_t rawReading = read_raw_axis(address);
+    int16_t rawReading = read_raw_axis(address, readReg);
     float scaled = (float)rawReading / scaler;
     return scaled;
 }
 
-float read_gyro_axis(uint8_t address, uint16_t scaler)
+float read_gyro_axis(uint8_t address, uint16_t scaler, MPU6050_REG_READ_TYPE readReg)
 {
-    int16_t rawReading = read_raw_axis(address);
+    int16_t rawReading = read_raw_axis(address, readReg);
     float scaled = (float)rawReading / scaler;
     return scaled;
 }
 
-int16_t read_raw_axis(uint8_t address)
+int16_t read_raw_axis(uint8_t address, MPU6050_REG_READ_TYPE readReg)
 {
     uint8_t measureUpper = 0;
     uint8_t measureLower = 0;
     
     //upper portion of accel 
-    MPU6050_REG_READ(address, &measureUpper);
+    readReg(address, &measureUpper);
     
     //lower portion
-    MPU6050_REG_READ(address + 1, &measureLower);
+    readReg(address + 1, &measureLower);
     
     int16_t combined = (int16_t)(measureUpper << 8) | measureLower;
     return combined;
@@ -177,29 +178,29 @@ int16_t read_raw_axis(uint8_t address)
  * 6. Check if gyro passes self test
  * 7. Revert gyroFS setting and turn off self tests
  */
-FACTORY_TEST_RESULT gyro_self_test(void)
+FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg)
 {
     //save old gyro full scale range
     uint8_t gyroFs = 0;
 
-    MPU6050_REG_READ(REG_GYRO_CONFIG, &gyroFs);
+    readReg(REG_GYRO_CONFIG, &gyroFs);
     
     gyroFs &= GYRO_FS_SEL_MASK; //keep only the FS_SEL setting
 
     //set gyro to 250 dps for test
-    MPU6050_REG_WRITE(REG_GYRO_CONFIG, GYRO_FS_SEL_250_DPS);
+    writeReg(REG_GYRO_CONFIG, GYRO_FS_SEL_250_DPS);
 
     //wait
     HAL_Delay(250);
 
     //get gyro's output with self test disabled
     int16_t TD[3]; //3 axis
-    TD[0] = read_raw_axis(REG_GYRO_X_MEASURE_1);
-    TD[1] = read_raw_axis(REG_GYRO_Y_MEASURE_1);
-    TD[2] = read_raw_axis(REG_GYRO_Z_MEASURE_1);
+    TD[0] = read_raw_axis(REG_GYRO_X_MEASURE_1, readReg);
+    TD[1] = read_raw_axis(REG_GYRO_Y_MEASURE_1, readReg);
+    TD[2] = read_raw_axis(REG_GYRO_Z_MEASURE_1, readReg);
 
     //enable self test, and datasheet requires gyro set to 250 DPS
-    MPU6050_REG_WRITE(
+    writeReg(
         REG_GYRO_CONFIG, 
         GYRO_FS_SEL_250_DPS | GYRO_XG_ST | GYRO_YG_ST | GYRO_ZG_ST
     );
@@ -209,9 +210,9 @@ FACTORY_TEST_RESULT gyro_self_test(void)
     
     //get gyro's output with self test enabled
     int16_t TE[3]; //3 axis
-    TE[0] = read_raw_axis(REG_GYRO_X_MEASURE_1);
-    TE[1] = read_raw_axis(REG_GYRO_Y_MEASURE_1);
-    TE[2] = read_raw_axis(REG_GYRO_Z_MEASURE_1);
+    TE[0] = read_raw_axis(REG_GYRO_X_MEASURE_1, readReg);
+    TE[1] = read_raw_axis(REG_GYRO_Y_MEASURE_1, readReg);
+    TE[2] = read_raw_axis(REG_GYRO_Z_MEASURE_1, readReg);
 
     //calculate the value of STR from the datasheet. This is
     //different from reading the SELF_TEST (GTest) registers below
@@ -224,9 +225,9 @@ FACTORY_TEST_RESULT gyro_self_test(void)
     //read self test registers
     uint8_t GTest[3];
 
-    MPU6050_REG_READ(REG_SELF_TEST_X, &GTest[0]);
-    MPU6050_REG_READ(REG_SELF_TEST_Y, &GTest[1]);
-    MPU6050_REG_READ(REG_SELF_TEST_Z, &GTest[2]);
+    readReg(REG_SELF_TEST_X, &GTest[0]);
+    readReg(REG_SELF_TEST_Y, &GTest[1]);
+    readReg(REG_SELF_TEST_Z, &GTest[2]);
 
     GTest[0] &= XG_TEST_MASK;
     GTest[1] &= YG_TEST_MASK;
@@ -277,35 +278,35 @@ FACTORY_TEST_RESULT gyro_self_test(void)
 
 
     //revert test setup
-    MPU6050_REG_WRITE(REG_GYRO_CONFIG, gyroFs);
+    writeReg(REG_GYRO_CONFIG, gyroFs);
 
     
     return FACTORY_TEST_PASS;
 }
 
-FACTORY_TEST_RESULT accel_self_test(void)
+FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg)
 {
     //save old accel full scale range
     uint8_t accelFs = 0;
 
-    MPU6050_REG_READ(REG_ACCEL_CONFIG, &accelFs);
+    readReg(REG_ACCEL_CONFIG, &accelFs);
     
     accelFs &= ACCEL_FS_SEL_MASK; //keep only the FS_SEL setting
 
     //set accel to 8g for test
-    MPU6050_REG_WRITE(REG_ACCEL_CONFIG, ACCEL_FS_8G);
+    writeReg(REG_ACCEL_CONFIG, ACCEL_FS_8G);
 
     //wait
     HAL_Delay(250);
 
     //get accels's output with self test disabled
     int16_t TD[3]; //3 axis
-    TD[0] = read_raw_axis(REG_ACCEL_X_MEASURE_1);
-    TD[1] = read_raw_axis(REG_ACCEL_Y_MEASURE_1);
-    TD[2] = read_raw_axis(REG_ACCEL_Z_MEASURE_1);
+    TD[0] = read_raw_axis(REG_ACCEL_X_MEASURE_1, readReg);
+    TD[1] = read_raw_axis(REG_ACCEL_Y_MEASURE_1, readReg);
+    TD[2] = read_raw_axis(REG_ACCEL_Z_MEASURE_1, readReg);
 
     //enable self test, and datasheet requires accel set to 8g
-    MPU6050_REG_WRITE(
+    writeReg(
         REG_ACCEL_CONFIG, 
         ACCEL_FS_8G | ACCEL_XA_ST | ACCEL_YA_ST | ACCEL_ZA_ST
     );
@@ -315,9 +316,9 @@ FACTORY_TEST_RESULT accel_self_test(void)
     
     //get accels's output with self test enabled
     int16_t TE[3]; //3 axis
-    TE[0] = read_raw_axis(REG_ACCEL_X_MEASURE_1);
-    TE[1] = read_raw_axis(REG_ACCEL_Y_MEASURE_1);
-    TE[2] = read_raw_axis(REG_ACCEL_Z_MEASURE_1);
+    TE[0] = read_raw_axis(REG_ACCEL_X_MEASURE_1, readReg);
+    TE[1] = read_raw_axis(REG_ACCEL_Y_MEASURE_1, readReg);
+    TE[2] = read_raw_axis(REG_ACCEL_Z_MEASURE_1, readReg);
 
     //calculate the value of STR from the datasheet. This is
     //different from reading the SELF_TEST (ATest) registers below
@@ -332,12 +333,12 @@ FACTORY_TEST_RESULT accel_self_test(void)
     uint8_t SELF_TEST_A; //less significant portion
 
     //upper 3 bits
-    MPU6050_REG_READ(REG_SELF_TEST_X, &ATestUpper[0]);
-    MPU6050_REG_READ(REG_SELF_TEST_Y, &ATestUpper[1]);
-    MPU6050_REG_READ(REG_SELF_TEST_Z, &ATestUpper[2]);
+    readReg(REG_SELF_TEST_X, &ATestUpper[0]);
+    readReg(REG_SELF_TEST_Y, &ATestUpper[1]);
+    readReg(REG_SELF_TEST_Z, &ATestUpper[2]);
     
     //lower 2 bits
-    MPU6050_REG_READ(REG_SELF_TEST_A, &SELF_TEST_A);
+    readReg(REG_SELF_TEST_A, &SELF_TEST_A);
 
     //final combined accel test values
     uint8_t ATest[3];
@@ -390,14 +391,14 @@ FACTORY_TEST_RESULT accel_self_test(void)
 
 
     //revert test setup
-    MPU6050_REG_WRITE(REG_ACCEL_CONFIG, accelFs);
+    writeReg(REG_ACCEL_CONFIG, accelFs);
 
     
     return FACTORY_TEST_PASS;
 }
 
 
-void poll_axes_individually(void)
+void poll_axes_individually(MPU6050_REG_READ_TYPE readReg)
 {
     char txBuff[100];
     int numSamples = 6 * 5 * 100; //6 axis * 5 seconds * 100 samples/sec
@@ -406,7 +407,7 @@ void poll_axes_individually(void)
     const float samplingFreq = 100; //100Hz freq
     const float samplingPeriod = 1.0f / samplingFreq; //0.01s
     const int samplingPeriodMs = (int)S_TO_MS(samplingPeriod);
-    buffLen = sprintf(txBuff, "\r\naccelX,accelY,accelZ,gyroX,gyroY,gyroZ");
+    buffLen = sprintf(txBuff, "\r\naccelX, accelY, accelZ, gyroX, gyroY, gyroZ");
     HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, buffLen, 100);
     txBuff[0] = '\0';
     int i = 0;
@@ -414,22 +415,22 @@ void poll_axes_individually(void)
     {
         /* USER CODE END WHILE */
         int startRead = HAL_GetTick();
-        float accelX = read_accel_axis(REG_ACCEL_X_MEASURE_1, ACCEL_FS_2_DIV);
+        float accelX = read_accel_axis(REG_ACCEL_X_MEASURE_1, ACCEL_FS_2_DIV, readReg);
         samples[i++] = accelX;
         
-        float accelY = read_accel_axis(REG_ACCEL_Y_MEASURE_1, ACCEL_FS_2_DIV);
+        float accelY = read_accel_axis(REG_ACCEL_Y_MEASURE_1, ACCEL_FS_2_DIV, readReg);
         samples[i++] = accelY;
         
-        float accelZ = read_accel_axis(REG_ACCEL_Z_MEASURE_1, ACCEL_FS_2_DIV);
+        float accelZ = read_accel_axis(REG_ACCEL_Z_MEASURE_1, ACCEL_FS_2_DIV, readReg);
         samples[i++] = accelZ;
 
-        float gyroX = read_gyro_axis(REG_GYRO_X_MEASURE_1, GYRO_FS_250_DIV);
+        float gyroX = read_gyro_axis(REG_GYRO_X_MEASURE_1, GYRO_FS_250_DIV, readReg);
         samples[i++] = gyroX;
 
-        float gyroY = read_gyro_axis(REG_GYRO_Y_MEASURE_1, GYRO_FS_250_DIV);
+        float gyroY = read_gyro_axis(REG_GYRO_Y_MEASURE_1, GYRO_FS_250_DIV, readReg);
         samples[i++] = gyroY;
 
-        float gyroZ = read_gyro_axis(REG_GYRO_Z_MEASURE_1, GYRO_FS_250_DIV);
+        float gyroZ = read_gyro_axis(REG_GYRO_Z_MEASURE_1, GYRO_FS_250_DIV, readReg);
         samples[i++] = gyroZ;
 
 
@@ -441,7 +442,7 @@ void poll_axes_individually(void)
     i = 0;
     while(i < numSamples)
     {
-        buffLen = sprintf(txBuff, "\r\n%.2f,%.2f,%.2f,%.2f,%.2f,%.2f", 
+        buffLen = sprintf(txBuff, "\r\n%.2f, %.2f, %.2f, %.2f, %.2f, %.2f", 
             samples[i], samples[i + 1], samples[i + 2], //accel xyz
             samples[i + 3], samples[i + 4], samples[i + 5] //gyro xyz
         );
@@ -451,17 +452,17 @@ void poll_axes_individually(void)
     }
 }
 
-uint16_t read_fifo_count()
+uint16_t read_fifo_count(MPU6050_REG_READ_TYPE readReg)
 {
     uint8_t upper = 0;
     uint8_t lower = 0;
-    MPU6050_REG_READ(REG_FIFO_COUNT_H, &upper);
-    MPU6050_REG_READ(REG_FIFO_COUNT_L, &lower);
+    readReg(REG_FIFO_COUNT_H, &upper);
+    readReg(REG_FIFO_COUNT_L, &lower);
     uint16_t combined = (((uint16_t)upper) << 8) | lower;
     return combined;
 }
 
-void fifo_count_test(uint16_t readPeriodMs, uint16_t sampleRate, uint8_t numAxes)
+void fifo_count_test(uint16_t readPeriodMs, uint16_t sampleRate, uint8_t numAxes, MPU6050_BURST_READ_TYPE burstRead, MPU6050_REG_READ_TYPE readReg)
 {
     int buffLen = 0; //uart buff len
     char txBuff[100]; //write characters here
@@ -486,8 +487,8 @@ void fifo_count_test(uint16_t readPeriodMs, uint16_t sampleRate, uint8_t numAxes
     uint8_t throwAway[1024]; 
     
     //clear the buffer and count by reading the fifo
-    uint16_t clearCount = read_fifo_count(); //only read the buffer for as much data it currently has
-    MPU6050_BURST_READ(REG_FIFO_R_W, throwAway, clearCount); //don't care about values we read
+    uint16_t clearCount = read_fifo_count(readReg); //only read the buffer for as much data it currently has
+    burstRead(REG_FIFO_R_W, throwAway, clearCount); //don't care about values we read
     
     HAL_Delay(readPeriodMs); //delay for the required time
     
@@ -496,10 +497,10 @@ void fifo_count_test(uint16_t readPeriodMs, uint16_t sampleRate, uint8_t numAxes
     {
         uint32_t startTime = HAL_GetTick();
         
-        fifo_count_results[i] = read_fifo_count(); //save the count
+        fifo_count_results[i] = read_fifo_count(readReg); //save the count
         
         //clear the buffer and count by reading the fifo
-        MPU6050_BURST_READ(REG_FIFO_R_W, throwAway, fifo_count_results[i]);
+        burstRead(REG_FIFO_R_W, throwAway, fifo_count_results[i]);
         
         uint32_t endTime = HAL_GetTick();
         uint32_t total = endTime - startTime;
@@ -525,7 +526,7 @@ void fifo_count_test(uint16_t readPeriodMs, uint16_t sampleRate, uint8_t numAxes
 }
 
 
-void read_fifo_test(uint16_t readPeriodMs)
+void read_fifo_test(uint16_t readPeriodMs, MPU6050_BURST_READ_TYPE burstRead, MPU6050_REG_READ_TYPE readReg)
 {
     int buffLen = 0; //uart buff len
     char txBuff[100]; //write characters here
@@ -539,10 +540,10 @@ void read_fifo_test(uint16_t readPeriodMs)
     {
         uint32_t startTime = HAL_GetTick();
         
-        fifo_count_results[i] = read_fifo_count(); //save the count
+        fifo_count_results[i] = read_fifo_count(readReg); //save the count
         
         //clear the buffer and count by reading the fifo
-        MPU6050_BURST_READ(REG_FIFO_R_W, data[i], fifo_count_results[i]);
+        burstRead(REG_FIFO_R_W, data[i], fifo_count_results[i]);
         
         uint32_t endTime = HAL_GetTick();
         uint32_t total = endTime - startTime;
@@ -574,6 +575,4 @@ void read_fifo_test(uint16_t readPeriodMs)
             txBuff[0] = '\0';
         }
     }
-
-
 }
