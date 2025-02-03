@@ -33,6 +33,10 @@
 #define TRANSFORM(upper, lower, scaler) \
     ((int16_t)(((uint16_t)upper << 8) | lower)) / (float)scaler;
 
+
+typedef int MPU6050_REG_READ_TYPE(uint16_t, uint8_t*);
+typedef int MPU6050_REG_WRITE_TYPE(uint16_t, uint8_t);
+
 /**
  * Sets configuration registers to default values
  * 1. Reset Power Management Register - 0x6B
@@ -42,7 +46,7 @@
  * 4. Awakens all gyro and accel axes via Power Management 2 Register - 0x6C
  *    (turn off unused axes later)
  */
-uint16_t init_mpu6050(void);
+uint16_t init_mpu6050(MPU6050_REG_WRITE_TYPE writeReg);
 
 /**
  * Self-test function that reads back configuration registers, 
@@ -50,19 +54,19 @@ uint16_t init_mpu6050(void);
  * Checks: REG_CONFIG, REG_GYRO_CONFIG, REG_ACCEL_CONFIG,
  * REG_SMPRT_DIV
  */
-void read_setup_registers(void);
+void read_setup_registers(MPU6050_REG_READ_TYPE readReg);
 
 /**
  * Wrapper around HAL_I2C_Mem_Write. 
  * TODO: Convert to Macro, include return
  */
-void MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue);
+int MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue);
 
 /**
  * Wrapper around HAL_I2C_Mem_Read
  * //todo add return
  */
-void MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr);
+int MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr);
 
 void MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes);
 

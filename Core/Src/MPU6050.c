@@ -6,7 +6,7 @@
  */
 #include <MPU6050.h>
 
-void MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue)
+int MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue)
 {
     //todo: return the hal status
     HAL_I2C_Mem_Write(
@@ -18,9 +18,10 @@ void MPU6050_REG_WRITE(uint16_t regAddr, uint8_t regValue)
         SIZE_1_BYTE,
         HAL_I2C_TIMEOUT
     );
+    return 0;
 }
 
-void MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr)
+int MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr)
 {
     //todo: return the hal status
     HAL_I2C_Mem_Read(
@@ -32,6 +33,7 @@ void MPU6050_REG_READ(uint16_t regAddr, uint8_t* valAddr)
         SIZE_1_BYTE,
         HAL_I2C_TIMEOUT
     );
+    return 0;
 }
 
 void MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes)
@@ -48,37 +50,37 @@ void MPU6050_BURST_READ(uint16_t regAddr, uint8_t* data, uint16_t bytes)
     );
 }
 
-uint16_t init_mpu6050(void)
+uint16_t init_mpu6050(MPU6050_REG_WRITE_TYPE writeReg)
 {
     //reset the power managment register
-    MPU6050_REG_WRITE(REG_PWR_MGMT_1, PWR_MGMT_DEV_RESET);
+    writeReg(REG_PWR_MGMT_1, PWR_MGMT_DEV_RESET);
     HAL_Delay(100);
 
     //Reset fifo, i2c master, sensor signal paths and sensors
     //via user ctrl register
-    MPU6050_REG_WRITE(REG_USER_CTRL, I2C_MST_RESET | SIG_COND_RESET);
+    writeReg(REG_USER_CTRL, I2C_MST_RESET | SIG_COND_RESET);
     HAL_Delay(100);
 
     //set clock source
-    MPU6050_REG_WRITE(REG_PWR_MGMT_1, PWR_MGMT_CLK_SEL_INTERNAL);
+    writeReg(REG_PWR_MGMT_1, PWR_MGMT_CLK_SEL_INTERNAL);
 
     //setup 2nd power management register
     //MPU6050_REG_WRITE(REG_PWR_MGMT_2, STBY_ZG | STBY_XG | STBY_YG); //gyro sleeps
-    MPU6050_REG_WRITE(REG_PWR_MGMT_2, 0x0); //awaken all accel + gyro axes
+    writeReg(REG_PWR_MGMT_2, 0x0); //awaken all accel + gyro axes
     
     HAL_Delay(1000);
 
     return 0;
 }
 
-void read_setup_registers(void)
+void read_setup_registers(MPU6050_REG_READ_TYPE readReg)
 {
     uint8_t readBuff = 0;
     char txBuff[100];
     int uart_buf_len = 0;
 
     //config register
-    MPU6050_REG_READ(REG_CONFIG, &readBuff);
+    readReg(REG_CONFIG, &readBuff);
     uint8_t fsync_val = readBuff & 0x38;
     uint8_t dlpf_val = readBuff & 0x7;
     uart_buf_len = sprintf(
@@ -94,7 +96,7 @@ void read_setup_registers(void)
     readBuff = 0;
 
     //gyro config
-    MPU6050_REG_READ(REG_GYRO_CONFIG, &readBuff);
+    readReg(REG_GYRO_CONFIG, &readBuff);
     uint8_t gyro_sel = readBuff & 0x18;
     uart_buf_len = sprintf(
         txBuff, 
@@ -107,7 +109,7 @@ void read_setup_registers(void)
     readBuff = 0;
 
     //accelerometer config register
-    MPU6050_REG_READ(REG_ACCEL_CONFIG, &readBuff);
+    readReg(REG_ACCEL_CONFIG, &readBuff);
     uint8_t fs_val = readBuff & 0x18;
     uart_buf_len = sprintf(
         txBuff, 
@@ -120,7 +122,7 @@ void read_setup_registers(void)
     readBuff = 0;
 
     //sample rate divider
-    MPU6050_REG_READ(REG_SMPRT_DIV, &readBuff);
+    readReg(REG_SMPRT_DIV, &readBuff);
     uint8_t rate_div = readBuff & 0xFF;
     uart_buf_len = sprintf(
         txBuff, 

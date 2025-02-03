@@ -90,74 +90,79 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  uint16_t result = init_mpu6050();
+
+  MPU6050_REG_READ_TYPE* readReg = MPU6050_REG_READ;
+  MPU6050_REG_WRITE_TYPE* writeReg = MPU6050_REG_WRITE;
+
+  uint16_t result = init_mpu6050(writeReg);
+  
 
   //setup the low pass filter. 
-  MPU6050_REG_WRITE(REG_CONFIG, DLPF_CFG_6 | EXT_SYNC_OFF);
+  writeReg(REG_CONFIG, DLPF_CFG_6 | EXT_SYNC_OFF);
 
   //select Gyroscope's full scale range
-  MPU6050_REG_WRITE(REG_GYRO_CONFIG, GYRO_FS_SEL_250_DPS);   
+  writeReg(REG_GYRO_CONFIG, GYRO_FS_SEL_250_DPS);   
   
   //select Accelerometer's full scale range
-  MPU6050_REG_WRITE(REG_ACCEL_CONFIG, ACCEL_FS_2G);
+  writeReg(REG_ACCEL_CONFIG, ACCEL_FS_2G);
 
   //setup the sample rate divider
-  MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
+  writeReg(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
+
+  read_setup_registers(readReg);
+
+  // //enable the fifo
+  // MPU6050_REG_WRITE(REG_USER_CTRL, FIFO_EN);
+  // HAL_Delay(100);
+  
 
   
 
-  //enable the fifo
-  MPU6050_REG_WRITE(REG_USER_CTRL, FIFO_EN);
-  HAL_Delay(100);
-  
-
-  
-
   
 
 
-  gyro_self_test();
-  accel_self_test();
-  read_setup_registers();
-  //poll_axes_individually();
+  // gyro_self_test();
+  // accel_self_test();
+  // read_setup_registers();
+  // //poll_axes_individually();
 
-  //3 gyro axes at 100Hz for 1 sec
-  MPU6050_REG_WRITE(REG_FIFO_EN, XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
-  fifo_count_test(1000, 100, 3);
+  // //3 gyro axes at 100Hz for 1 sec
+  // MPU6050_REG_WRITE(REG_FIFO_EN, XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  // fifo_count_test(1000, 100, 3);
 
-  //3 accel axes at 100Hz for 1 sec
-  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN);
-  fifo_count_test(1000, 100, 3);
+  // //3 accel axes at 100Hz for 1 sec
+  // MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN);
+  // fifo_count_test(1000, 100, 3);
 
-  //6 axes at 100Hz for 2 sec (should fail)
-  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
-  fifo_count_test(2000, 100, 6);
+  // //6 axes at 100Hz for 2 sec (should fail)
+  // MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  // fifo_count_test(2000, 100, 6);
 
-  //3 accel axes at 100Hz for 2 sec (should fail)
-  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN);
-  fifo_count_test(2000, 100, 3);
+  // //3 accel axes at 100Hz for 2 sec (should fail)
+  // MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN);
+  // fifo_count_test(2000, 100, 3);
 
-  //6 axes at 100Hz for 350ms
-  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
-  fifo_count_test(350, 100, 6);
+  // //6 axes at 100Hz for 350ms
+  // MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  // fifo_count_test(350, 100, 6);
   
-  //6 axes at 50Hz for 800ms
-  MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_50Hz);
-  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
-  fifo_count_test(800, 50, 6);
+  // //6 axes at 50Hz for 800ms
+  // MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_50Hz);
+  // MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  // fifo_count_test(800, 50, 6);
 
-  //6 axes at 200Hz for 200ms
-  MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_200Hz);
-  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
-  fifo_count_test(200, 200, 6);
+  // //6 axes at 200Hz for 200ms
+  // MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_200Hz);
+  // MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  // fifo_count_test(200, 200, 6);
 
-  //seems like the fifo doesn't like to work if it gets filled with much more than 600 bytes?
-  MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
-  MPU6050_REG_WRITE(REG_FIFO_EN, 0); //disable fifo for poll axis test
-  poll_axes_individually();
+  // //seems like the fifo doesn't like to work if it gets filled with much more than 600 bytes?
+  // MPU6050_REG_WRITE(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
+  // MPU6050_REG_WRITE(REG_FIFO_EN, 0); //disable fifo for poll axis test
+  // poll_axes_individually();
   
-  MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
-  read_fifo_test(500);
+  // MPU6050_REG_WRITE(REG_FIFO_EN, ACCEL_FIFO_EN | XG_FIFO_EN | YG_FIFO_EN | ZG_FIFO_EN);
+  // read_fifo_test(500);
 
 
 
