@@ -11,20 +11,6 @@
 #include "MPU6050.h"
 
 /**
- * Wrapper around HAL_I2C_Mem_Write. 
- * TODO: Convert to Macro, include return
- */
-int MPU6050_REG_WRITE_STM32(uint16_t regAddr, uint8_t regValue);
-
-/**
- * Wrapper around HAL_I2C_Mem_Read
- * //todo add return
- */
-int MPU6050_REG_READ_STM32(uint16_t regAddr, uint8_t* valAddr);
-
-int MPU6050_BURST_READ_STM32(uint16_t regAddr, uint8_t* data, uint16_t bytes);
-
-/**
  * Self-test function that reads back configuration registers, 
  * and confirms if the expected values were written.
  * Checks: REG_CONFIG, REG_GYRO_CONFIG, REG_ACCEL_CONFIG,

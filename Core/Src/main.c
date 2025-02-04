@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 #include "REG_OPTIONS.h"
 #include "MPU6050.h"
+#include "example.h"
 #include "testFunctions.h"
 /* USER CODE END Includes */
 
