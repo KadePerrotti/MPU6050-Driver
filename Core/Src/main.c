@@ -24,7 +24,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "REG_OPTIONS.h"
+#include "MPU6050.h"
+#include "testFunctions.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -91,9 +93,9 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  MPU6050_REG_READ_TYPE* readReg = MPU6050_REG_READ;
-  MPU6050_BURST_READ_TYPE* burstRead = MPU6050_BURST_READ;
-  MPU6050_REG_WRITE_TYPE* writeReg = MPU6050_REG_WRITE;
+  MPU6050_REG_READ_TYPE* readReg = MPU6050_REG_READ_STM32;
+  MPU6050_BURST_READ_TYPE* burstRead = MPU6050_BURST_READ_STM32;
+  MPU6050_REG_WRITE_TYPE* writeReg = MPU6050_REG_WRITE_STM32;
 
 
   uint16_t result = init_mpu6050(writeReg);
