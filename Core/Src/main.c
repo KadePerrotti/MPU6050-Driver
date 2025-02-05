@@ -97,9 +97,10 @@ int main(void)
   MPU6050_REG_READ_TYPE* readReg = MPU6050_REG_READ_STM32;
   MPU6050_BURST_READ_TYPE* burstRead = MPU6050_BURST_READ_STM32;
   MPU6050_REG_WRITE_TYPE* writeReg = MPU6050_REG_WRITE_STM32;
+  DELAY_MS_TYPE* delay = HAL_Delay;
 
 
-  uint16_t result = init_mpu6050(writeReg);
+  uint16_t result = init_mpu6050(writeReg, delay);
   
   //setup the low pass filter. 
   writeReg(REG_CONFIG, DLPF_CFG_6 | EXT_SYNC_OFF);
@@ -119,8 +120,8 @@ int main(void)
   writeReg(REG_USER_CTRL, FIFO_EN);
   HAL_Delay(100);
 
-  gyro_self_test(readReg, writeReg);
-  accel_self_test(readReg, writeReg);
+  gyro_self_test(readReg, writeReg, delay);
+  accel_self_test(readReg, writeReg, delay);
   poll_axes_individually(readReg);
 
   // //3 gyro axes at 100Hz for 1 sec

@@ -11,8 +11,6 @@
 #include <stdint.h>
 
 
-
-
 #define SIZE_1_BYTE (1)
 
 #define HAL_I2C_TIMEOUT (100)
@@ -32,6 +30,8 @@ typedef int MPU6050_REG_READ_TYPE(uint16_t, uint8_t*);
 typedef int MPU6050_BURST_READ_TYPE(uint16_t, uint8_t*, uint16_t);
 typedef int MPU6050_REG_WRITE_TYPE(uint16_t, uint8_t);
 
+typedef void DELAY_MS_TYPE(uint32_t);
+
 /**
  * Sets configuration registers to default values
  * 1. Reset Power Management Register - 0x6B
@@ -41,7 +41,7 @@ typedef int MPU6050_REG_WRITE_TYPE(uint16_t, uint8_t);
  * 4. Awakens all gyro and accel axes via Power Management 2 Register - 0x6C
  *    (turn off unused axes later)
  */
-uint16_t init_mpu6050(MPU6050_REG_WRITE_TYPE writeReg);
+uint16_t init_mpu6050(MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay);
 
 /**
  * Accelerometer readings are 2 bytes, stored in two registers on the
@@ -84,7 +84,7 @@ typedef enum
  * 6. Obtain Factory Trim values (FT)
  * 7. Use FT and STR to determine if each axis has passed
  */
-FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg);
+FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay);
 
 
 /**
@@ -97,7 +97,7 @@ FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WR
  * 6. Obtain Factory Trim values (FT)
  * 7. Use FT and STR to determine if each axis has passed
  */
-FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg);
+FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay);
 
 
 /**

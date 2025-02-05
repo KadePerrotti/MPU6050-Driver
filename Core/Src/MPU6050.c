@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "i2c.h"
 #include "usart.h"
 #include "stm32l4xx_hal.h"
 
@@ -16,16 +15,16 @@
 #include "MPU6050.h"
 
 
-uint16_t init_mpu6050(MPU6050_REG_WRITE_TYPE writeReg)
+uint16_t init_mpu6050(MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay)
 {
     //reset the power managment register
     writeReg(REG_PWR_MGMT_1, PWR_MGMT_DEV_RESET);
-    HAL_Delay(100);
+    delay(100);
 
     //Reset fifo, i2c master, sensor signal paths and sensors
     //via user ctrl register
     writeReg(REG_USER_CTRL, I2C_MST_RESET | SIG_COND_RESET);
-    HAL_Delay(100);
+    delay(100);
 
     //set clock source
     writeReg(REG_PWR_MGMT_1, PWR_MGMT_CLK_SEL_INTERNAL);
@@ -34,7 +33,7 @@ uint16_t init_mpu6050(MPU6050_REG_WRITE_TYPE writeReg)
     //MPU6050_REG_WRITE(REG_PWR_MGMT_2, STBY_ZG | STBY_XG | STBY_YG); //gyro sleeps
     writeReg(REG_PWR_MGMT_2, 0x0); //awaken all accel + gyro axes
     
-    HAL_Delay(1000);
+    delay(1000);
 
     return 0;
 }
@@ -80,7 +79,7 @@ int16_t read_raw_axis(uint8_t address, MPU6050_REG_READ_TYPE readReg)
  * 6. Check if gyro passes self test
  * 7. Revert gyroFS setting and turn off self tests
  */
-FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg)
+FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay)
 {
     //save old gyro full scale range
     uint8_t gyroFs = 0;
@@ -93,7 +92,7 @@ FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WR
     writeReg(REG_GYRO_CONFIG, GYRO_FS_SEL_250_DPS);
 
     //wait
-    HAL_Delay(250);
+    delay(250);
 
     //get gyro's output with self test disabled
     int16_t TD[3]; //3 axis
@@ -108,7 +107,7 @@ FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WR
     );
 
     //wait
-    HAL_Delay(250);
+    delay(250);
     
     //get gyro's output with self test enabled
     int16_t TE[3]; //3 axis
@@ -186,7 +185,7 @@ FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WR
     return FACTORY_TEST_PASS;
 }
 
-FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg)
+FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay)
 {
     //save old accel full scale range
     uint8_t accelFs = 0;
@@ -199,7 +198,7 @@ FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_W
     writeReg(REG_ACCEL_CONFIG, ACCEL_FS_8G);
 
     //wait
-    HAL_Delay(250);
+    delay(250);
 
     //get accels's output with self test disabled
     int16_t TD[3]; //3 axis
@@ -214,7 +213,7 @@ FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_W
     );
 
     //wait
-    HAL_Delay(250);
+    delay(250);
     
     //get accels's output with self test enabled
     int16_t TE[3]; //3 axis
