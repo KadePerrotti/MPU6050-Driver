@@ -13,8 +13,6 @@
 
 #define SIZE_1_BYTE (1)
 
-#define HAL_I2C_TIMEOUT (100)
-
 #define S_TO_MS(s) (s * 1000)
 
 #define BYTES_PER_MEASURE (2) //gyro, accel, temp measurements are 2 bytes each
