@@ -4,12 +4,8 @@
  *  Created on: Nov 25, 2024
  *      Author: Kade
  */
-#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-
-#include "usart.h"
-#include "stm32l4xx_hal.h"
 
 #include "REG_OPTIONS.h"
 #include "MPU6050.h"
@@ -79,7 +75,7 @@ int16_t read_raw_axis(uint8_t address, MPU6050_REG_READ_TYPE readReg)
  * 6. Check if gyro passes self test
  * 7. Revert gyroFS setting and turn off self tests
  */
-FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay)
+FACTORY_TEST_RESULTS gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay)
 {
     //save old gyro full scale range
     uint8_t gyroFs = 0;
@@ -141,51 +137,19 @@ FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WR
     factoryTrim[2] = 25.0f * 131.0f * powf(1.046f, (float)GTest[2] - 1.0f);
 
     //finally, calculate test results
-    float testResults[3];
-    testResults[0] = 100.0f * (((float)selfTestResponse[0] - factoryTrim[0]) / factoryTrim[0]);
-    testResults[1] = 100.0f * (((float)selfTestResponse[1] - factoryTrim[1]) / factoryTrim[1]);
-    testResults[2] = 100.0f * (((float)selfTestResponse[2] - factoryTrim[2]) / factoryTrim[2]);
-    
-    //report test results
-    char buff[100];
-    uint8_t buffSize = 0;
-
-    buffSize = sprintf(
-        buff,
-        "\r\nGyro X self test: %c, change from factory trim: %f%%", 
-        14.0f > testResults[0] && testResults[0] > -14.0f ? 'P' : 'F' , 
-        testResults[0]
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
-    buff[0] = '\0';
-
-    buffSize = sprintf(
-        buff,
-        "\r\nGyro Y self test: %c, change from factory trim: %f%%", 
-        14.0f > testResults[1] && testResults[1] > -14.0f ? 'P' : 'F' , 
-        testResults[1]
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
-    buff[0] = '\0';
-
-    buffSize = sprintf(
-        buff,
-        "\r\nGyro Z self test: %c, change from factory trim: %f%%", 
-        14.0f > testResults[2] && testResults[2] > -14.0f ? 'P' : 'F' , 
-        testResults[2]
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
-    buff[0] = '\0';
-
+    FACTORY_TEST_RESULTS results;
+    results.failPercent = SELF_TEST_FAIL_PERCENT;
+    results.xAxis = 100.0f * (((float)selfTestResponse[0] - factoryTrim[0]) / factoryTrim[0]);
+    results.yAxis = 100.0f * (((float)selfTestResponse[1] - factoryTrim[1]) / factoryTrim[1]);
+    results.zAxis = 100.0f * (((float)selfTestResponse[2] - factoryTrim[2]) / factoryTrim[2]);
 
     //revert test setup
     writeReg(REG_GYRO_CONFIG, gyroFs);
-
     
-    return FACTORY_TEST_PASS;
+    return results;
 }
 
-FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay)
+FACTORY_TEST_RESULTS accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay)
 {
     //save old accel full scale range
     uint8_t accelFs = 0;
@@ -254,48 +218,16 @@ FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_W
     factoryTrim[2] = 4096.0f * 0.34f * powf((0.92f/0.34f), ((float)ATest[1] - 1) / 30.0f);
 
     //finally, calculate test results
-    float testResults[3];
-    testResults[0] = 100.0f * (((float)selfTestResponse[0] - factoryTrim[0]) / factoryTrim[0]);
-    testResults[1] = 100.0f * (((float)selfTestResponse[1] - factoryTrim[1]) / factoryTrim[1]);
-    testResults[2] = 100.0f * (((float)selfTestResponse[2] - factoryTrim[2]) / factoryTrim[2]);
-    
-    //report test results
-    char buff[100];
-    uint8_t buffSize = 0;
-
-    buffSize = sprintf(
-        buff,
-        "\r\nAccel X self test: %c, change from factory trim: %f%%", 
-        14.0f > testResults[0] && testResults[0] > -14.0f ? 'P' : 'F' , 
-        testResults[0]
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
-    buff[0] = '\0';
-
-    buffSize = sprintf(
-        buff,
-        "\r\nAccel Y self test: %c, change from factory trim: %f%%", 
-        14.0f > testResults[1] && testResults[1] > -14.0f ? 'P' : 'F' , 
-        testResults[1]
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
-    buff[0] = '\0';
-
-    buffSize = sprintf(
-        buff,
-        "\r\nAccel Z self test: %c, change from factory trim: %f%%", 
-        14.0f > testResults[2] && testResults[2] > -14.0f ? 'P' : 'F' , 
-        testResults[2]
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
-    buff[0] = '\0';
-
+    FACTORY_TEST_RESULTS results;
+    results.failPercent = SELF_TEST_FAIL_PERCENT;
+    results.xAxis = 100.0f * (((float)selfTestResponse[0] - factoryTrim[0]) / factoryTrim[0]);
+    results.yAxis = 100.0f * (((float)selfTestResponse[1] - factoryTrim[1]) / factoryTrim[1]);
+    results.zAxis = 100.0f * (((float)selfTestResponse[2] - factoryTrim[2]) / factoryTrim[2]);
 
     //revert test setup
     writeReg(REG_ACCEL_CONFIG, accelFs);
-
     
-    return FACTORY_TEST_PASS;
+    return results;
 }
 
 uint16_t read_fifo_count(MPU6050_REG_READ_TYPE readReg)

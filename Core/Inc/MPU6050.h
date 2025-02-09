@@ -21,6 +21,9 @@
 
 #define FIFO_SIZE (1024) //size of fifo in bytes
 
+ //if the change from factory trim is greater than abs(percent), the axis has failed
+#define SELF_TEST_FAIL_PERCENT (14.0f)
+
 //macro to turn raw data into a gyro or accel reading
 #define TRANSFORM(upper, lower, scaler) \
     ((int16_t)(((uint16_t)upper << 8) | lower)) / (float)scaler;
@@ -68,11 +71,21 @@ float read_gyro_axis(uint8_t address, uint16_t scaler, MPU6050_REG_READ_TYPE rea
  */
 int16_t read_raw_axis(uint8_t address, MPU6050_REG_READ_TYPE readReg);
 
-typedef enum 
+
+/**
+ * The factory test functions measure how far off the trim for each
+ * axis is from the factory values. If an axis > abs(passPercent), then
+ * that axis failed the test. See the self test registers description in the 
+ * MPU6050 register map for more information.
+ */
+typedef struct
 {
-    FACTORY_TEST_PASS = 0,
-    FACTORY_TEST_FAIL = -1
-} FACTORY_TEST_RESULT;
+  float xAxis;
+  float yAxis;
+  float zAxis;
+  float failPercent;  
+} FACTORY_TEST_RESULTS;
+
 
 /**
  * Runs a self test on the gyro. Steps:
@@ -84,7 +97,7 @@ typedef enum
  * 6. Obtain Factory Trim values (FT)
  * 7. Use FT and STR to determine if each axis has passed
  */
-FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay);
+FACTORY_TEST_RESULTS gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay);
 
 
 /**
@@ -97,7 +110,7 @@ FACTORY_TEST_RESULT gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WR
  * 6. Obtain Factory Trim values (FT)
  * 7. Use FT and STR to determine if each axis has passed
  */
-FACTORY_TEST_RESULT accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay);
+FACTORY_TEST_RESULTS accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay);
 
 
 /**

@@ -54,6 +54,7 @@
 #define SAMPLE_RATE_50Hz (0x13) 
 #define SAMPLE_RATE_100Hz (0x9) //Gyro rate = 1KHz when DLPF enabled
 #define SAMPLE_RATE_200Hz (0x4)
+#define RATE_DIV_MASK (0xFF)
 
 /**
  * Digital low pass and external Frame Synchronization Configuration:
@@ -71,10 +72,11 @@
 #define DLPF_CFG_5 (0x5)
 #define DLPF_CFG_6 (0x6) //max filtering
 #define EXT_SYNC_OFF (0x0) //turn off fsync
+#define DLPF_MASK (0x7)
+#define FSYNC_MASK (0x38)
 
 //Gyroscope config and self test activation register
 #define REG_GYRO_CONFIG (0x1B)
-#define GYRO_FS_SEL_MASK (0x18)
 #define GYRO_FS_SEL_250_DPS (0x0) //Gyro full scale range +-250 degrees / sec
 #define GYRO_FS_SEL_500_DPS (0x1 << 3) //Gyro full scale range +-500 degrees / sec
 #define GYRO_FS_SEL_1000_DPS (0x2 << 3) //Gyro full scale range +-1000 degrees / sec
@@ -86,6 +88,8 @@
 #define GYRO_FS_500_DIV (65.5f) //gyro scaler for 500 DPS
 #define GYRO_FS_1000_DIV (32.8f) //gyro scaler for 1000 DPS
 #define GYRO_FS_2000_DIV (16.4f) //gyro scaler for 2000 DPS
+#define GYRO_FS_SEL_MASK (0x18)
+
 
 //self test registers
 #define REG_SELF_TEST_X (0x0D)
@@ -109,7 +113,6 @@
 #define ACCEL_XA_ST (0x80) //activate accel self tests
 #define ACCEL_YA_ST (0x40)
 #define ACCEL_ZA_ST (0x20)
-#define ACCEL_FS_SEL_MASK (0x18)
 #define ACCEL_FS_2G (0x0) //Accel full scale range +-2g
 #define ACCEL_FS_4G (0x1 << 3) //Accel full scale range +-4g
 #define ACCEL_FS_8G (0x2 << 3) //Accel full scale range +-8g
@@ -118,6 +121,8 @@
 #define ACCEL_FS_4_DIV (8192.0f) //accel scaler for 4g
 #define ACCEL_FS_8_DIV (4096.0f) //accel scaler for 8g
 #define ACCEL_FS_16_DIV (2048.0f) //accel scaler for 16g
+#define ACCEL_FS_SEL_MASK (0x18)
+
 
 //Fifo enable regester. Controls which sensor 
 //outputs are written to the Fifo buffer

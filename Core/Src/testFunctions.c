@@ -12,66 +12,33 @@
 #include "REG_OPTIONS.h"
 
 
-void read_setup_registers(MPU6050_REG_READ_TYPE readReg)
+SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg)
 {
-    uint8_t readBuff = 0;
-    char txBuff[100];
-    int uart_buf_len = 0;
+    SETUP_REGISTERS vals; //
+    uint8_t readBuff; //actual register value goes here
 
     //config register
     readReg(REG_CONFIG, &readBuff);
-    uint8_t fsync_val = readBuff & 0x38;
-    uint8_t dlpf_val = readBuff & 0x7;
-    uart_buf_len = sprintf(
-        txBuff, 
-        "\r\n\n Config Reg: \r\n  FSYNC: %d, %c\r\n  DLPF: %d, %c\r\n", 
-        fsync_val, 
-        fsync_val == EXT_SYNC_OFF ? 't' : 'f',
-        dlpf_val,
-        dlpf_val == DLPF_CFG_6 ? 't' : 'f'
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
-    txBuff[0] = '\0';
+    vals.fsync = readBuff & FSYNC_MASK;
+    vals.dlpf = readBuff & DLPF_MASK;
     readBuff = 0;
 
     //gyro config
     readReg(REG_GYRO_CONFIG, &readBuff);
-    uint8_t gyro_sel = readBuff & 0x18;
-    uart_buf_len = sprintf(
-        txBuff, 
-        "\r\n\n Gyro Full Scale: \r\n  FS: %d, %c\r\n", 
-        gyro_sel, 
-        gyro_sel == GYRO_FS_SEL_250_DPS ? 't' : 'f'
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
-    txBuff[0] = '\0';
+    vals.gyro_sel = readBuff & GYRO_FS_SEL_MASK;
     readBuff = 0;
 
     //accelerometer config register
     readReg(REG_ACCEL_CONFIG, &readBuff);
-    uint8_t fs_val = readBuff & 0x18;
-    uart_buf_len = sprintf(
-        txBuff, 
-        "\r\n\n Accel Config Reg: \r\n  Full Scale: %d, %c\r\n", 
-        fs_val, 
-        fs_val == ACCEL_FS_2G ? 't' : 'f'
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
-    txBuff[0] = '\0';
+    vals.fs = readBuff & ACCEL_FS_SEL_MASK;
     readBuff = 0;
 
     //sample rate divider
     readReg(REG_SMPRT_DIV, &readBuff);
-    uint8_t rate_div = readBuff & 0xFF;
-    uart_buf_len = sprintf(
-        txBuff, 
-        "\r\n\n Gyro SR Div: \r\n  Divider: %d, %c\r\n", 
-        rate_div, 
-        rate_div == SAMPLE_RATE_100Hz ? 't' : 'f'
-    );
-    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
-    txBuff[0] = '\0';
+    vals.rate_div = readBuff & RATE_DIV_MASK;
     readBuff = 0;
+
+    return vals;
 }
 
 void poll_axes_individually(MPU6050_REG_READ_TYPE readReg)

@@ -17,6 +17,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include <stdio.h>
 #include "main.h"
 #include "i2c.h"
 #include "usart.h"
@@ -53,7 +54,8 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-
+void SelfTests_Print(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_RESULTS accelResults);
+void ReadSetupRegisters_Print(SETUP_REGISTERS vals);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -114,14 +116,17 @@ int main(void)
   //setup the sample rate divider
   writeReg(REG_SMPRT_DIV, SAMPLE_RATE_100Hz);
 
-  read_setup_registers(readReg);
+  SETUP_REGISTERS vals = read_setup_registers(readReg);
+  ReadSetupRegisters_Print(vals);
 
   //enable the fifo
   writeReg(REG_USER_CTRL, FIFO_EN);
   HAL_Delay(100);
 
-  gyro_self_test(readReg, writeReg, delay);
-  accel_self_test(readReg, writeReg, delay);
+  FACTORY_TEST_RESULTS gyroResults = gyro_self_test(readReg, writeReg, delay);
+  FACTORY_TEST_RESULTS accelResults = accel_self_test(readReg, writeReg, delay);
+  SelfTests_Print(gyroResults, accelResults);
+  
   poll_axes_individually(readReg);
 
   // //3 gyro axes at 100Hz for 1 sec
@@ -224,6 +229,113 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void SelfTests_Print(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_RESULTS accelResults)
+{
+  char buff[100];
+  uint8_t buffSize = 0;
+
+  //gyro
+  buffSize = sprintf(
+    buff,
+    "\r\nGyro X self test: %c, change from factory trim: %f%%", 
+    gyroResults.failPercent > gyroResults.xAxis && gyroResults.xAxis > -gyroResults.failPercent ? 'P' : 'F' , 
+    gyroResults.xAxis
+  );
+  HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+  buff[0] = '\0';
+
+  buffSize = sprintf(
+    buff,
+    "\r\nGyro Y self test: %c, change from factory trim: %f%%", 
+    gyroResults.failPercent > gyroResults.yAxis && gyroResults.yAxis > -gyroResults.failPercent ? 'P' : 'F' , 
+    gyroResults.yAxis
+  );
+  HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+  buff[0] = '\0';
+
+  buffSize = sprintf(
+    buff,
+    "\r\nGyro Z self test: %c, change from factory trim: %f%%", 
+    gyroResults.failPercent > gyroResults.zAxis && gyroResults.zAxis > -gyroResults.failPercent ? 'P' : 'F' , 
+    gyroResults.zAxis
+  );
+  HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+  buff[0] = '\0';
+
+
+  //accel
+  buffSize = sprintf(
+    buff,
+    "\r\nAccel X self test: %c, change from factory trim: %f%%", 
+    accelResults.failPercent > accelResults.xAxis && accelResults.xAxis > -accelResults.failPercent ? 'P' : 'F' , 
+    accelResults.xAxis
+  );
+  HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+  buff[0] = '\0';
+
+  buffSize = sprintf(
+    buff,
+    "\r\nAccel Y self test: %c, change from factory trim: %f%%", 
+    accelResults.failPercent > accelResults.yAxis && accelResults.yAxis > -accelResults.failPercent ? 'P' : 'F' , 
+    accelResults.yAxis
+  );
+  HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+  buff[0] = '\0';
+
+  buffSize = sprintf(
+    buff,
+    "\r\nAccel Z self test: %c, change from factory trim: %f%%", 
+    accelResults.failPercent > accelResults.zAxis && accelResults.zAxis > -accelResults.failPercent ? 'P' : 'F' , 
+    accelResults.zAxis
+  );
+  HAL_UART_Transmit(&huart2, (uint8_t*)buff, buffSize, 100);
+  buff[0] = '\0';
+}
+
+void ReadSetupRegisters_Print(SETUP_REGISTERS vals)
+{
+
+  char txBuff[100];
+  uint8_t uart_buf_len;
+  uart_buf_len = sprintf(
+        txBuff, 
+        "\r\n\n Config Reg: \r\n  FSYNC: %d, %c\r\n  DLPF: %d, %c\r\n", 
+        vals.fsync, 
+        vals.fsync == EXT_SYNC_OFF ? 't' : 'f',
+        vals.dlpf,
+        vals.dlpf == DLPF_CFG_6 ? 't' : 'f'
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
+    txBuff[0] = '\0';
+
+  uart_buf_len = sprintf(
+      txBuff, 
+      "\r\n\n Gyro Full Scale: \r\n  FS: %d, %c\r\n", 
+      vals.gyro_sel, 
+      vals.gyro_sel == GYRO_FS_SEL_250_DPS ? 't' : 'f'
+  );
+  HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
+  txBuff[0] = '\0';
+
+  uart_buf_len = sprintf(
+        txBuff, 
+        "\r\n\n Accel Config Reg: \r\n  Full Scale: %d, %c\r\n", 
+        vals.fs, 
+        vals.fs == ACCEL_FS_2G ? 't' : 'f'
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
+    txBuff[0] = '\0';
+
+  uart_buf_len = sprintf(
+        txBuff, 
+        "\r\n\n Gyro SR Div: \r\n  Divider: %d, %c\r\n", 
+        vals.rate_div, 
+        vals.rate_div == SAMPLE_RATE_100Hz ? 't' : 'f'
+    );
+    HAL_UART_Transmit(&huart2, (uint8_t*)txBuff, uart_buf_len, 100);
+    txBuff[0] = '\0';
+}
+
 
 /* USER CODE END 4 */
 

@@ -10,13 +10,31 @@
 
 #include "MPU6050.h"
 
+typedef struct 
+{
+    //Contained in REG_CONFIG
+    uint8_t fsync;
+    uint8_t dlpf;
+
+    //GYRO_CONFIG
+    uint8_t gyro_sel;
+
+    //ACCEL_CONFIG
+    uint8_t fs;
+
+    //SMPRT_DIV
+    uint8_t rate_div;
+} SETUP_REGISTERS;
+
 /**
- * Self-test function that reads back configuration registers, 
- * and confirms if the expected values were written.
+ * Self-test function that reads configuration registers
+ * and masks the desired variables. Returns a struct containing the
+ * them.
+ * 
  * Checks: REG_CONFIG, REG_GYRO_CONFIG, REG_ACCEL_CONFIG,
  * REG_SMPRT_DIV
  */
-void read_setup_registers(MPU6050_REG_READ_TYPE readReg);
+SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg);
 
 /**
  * testing function that reads each gyro and accel axis individually
