@@ -1,8 +1,9 @@
 /*
- * testFunctions.h
+ * TEST_FUNCTIONS.h
  *
  *  Created on: Feb 3, 2025
- *      Author: Kade
+ *      Author: Kade Perrotti
+ * Tests functions to ensure normal MPU6050 operation
  */
 
 #ifndef INC_TESTFUNCTIONS_H_

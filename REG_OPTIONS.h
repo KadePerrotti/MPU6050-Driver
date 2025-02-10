@@ -2,7 +2,7 @@
  * REG_OPTIONS.h
  *
  *  Created on: Nov 12, 2024
- *      Author: Kade
+ *      Author: Kade Perrotti
  * Includes Register addresses and common options used for those registers
  */
 
