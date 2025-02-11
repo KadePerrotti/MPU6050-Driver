@@ -1,8 +1,10 @@
 /*
- * utils.c
+ * MPU6050.c
  *
  *  Created on: Nov 25, 2024
- *      Author: Kade
+ *      Author: Kade Perrotti
+ * Implementations of functions that initialize and read data from
+ * the MPU6050
  */
 #include <stdlib.h>
 #include <math.h>
@@ -63,18 +65,6 @@ int16_t read_raw_axis(uint8_t address, MPU6050_REG_READ_TYPE readReg)
     return combined;
 }
 
-
-/**
- * Runs a self test on the gyro. Steps:
- * 1. Set gyro's full scale range to 250dps
- * 1. Save gyro's output with self test disabled (TD)
- * 2. Enable self test register
- * 3. Save gyro's output with self test enabled (TE)
- * 4. SelfTestResponse (STR) = TE - TD
- * 5. Get Factory Trim from G_Test register
- * 6. Check if gyro passes self test
- * 7. Revert gyroFS setting and turn off self tests
- */
 FACTORY_TEST_RESULTS gyro_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_WRITE_TYPE writeReg, DELAY_MS_TYPE delay)
 {
     //save old gyro full scale range
