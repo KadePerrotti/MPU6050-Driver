@@ -15,6 +15,7 @@
 
 #define SIZE_1_BYTE (1)
 #define S_TO_MS(s) (s * 1000)
+#define MS_TO_S(ms) (ms / 1000.0f)
 #define BYTES_PER_MEASURE (2) //gyro, accel, temp measurements are 2 bytes each
 #define FIFO_SIZE (1024) //size of fifo in bytes
 
@@ -70,6 +71,12 @@ typedef int MPU6050_REG_WRITE_TYPE(uint16_t, uint8_t);
  * @param 1: Delay time in ms
  */
 typedef void DELAY_MS_TYPE(uint32_t);
+
+/**
+ * @brief Functions of TIME_MS_TYPE should return the
+ * tick time in milliseconds
+ */
+typedef uint32_t TIME_MS_TYPE(void);
 
 /**
  * @brief Sets configuration registers to default values

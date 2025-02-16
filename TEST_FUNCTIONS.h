@@ -37,4 +37,28 @@ typedef struct
  */
 SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg);
 
+/**
+ * @brief testing function that reads each gyro and accel axis individually
+ * from the individual register for the amount of time specified
+ * @param sampleRate rate to sample each axis in Hz
+ * @param sampleTime total amount of time to sample in ms
+ * @param accelScaler scaler to transform raw accel data into g
+ * @param gyroScaler scaler to transform raw gyro data into degrees per second
+ * @param data array to place sample data into
+ * @param readReg function that performs register reads on the MPU6050
+ * @param delay function that blocks program execution for the specified ms
+ * @param getTime function that returns the current tick time in ms
+ */
+void poll_axes_individually
+(
+    uint16_t sampleRate, 
+    uint16_t sampleTime,
+    float accelScaler,
+    float gyroScaler, 
+    float *data, 
+    MPU6050_REG_READ_TYPE readReg,
+    DELAY_MS_TYPE delay,
+    TIME_MS_TYPE getTime
+);
+
 #endif /* INC_TESTFUNCTIONS_H_ */
