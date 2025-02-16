@@ -5,11 +5,8 @@
  *      Author: Kade Perrotti
  * Tests functions to ensure normal MPU6050 operation
  */
-#include <stdio.h>
 
-#include "usart.h"
-
-#include "testFunctions.h"
+#include "TEST_FUNCTIONS.h"
 #include "REG_OPTIONS.h"
 
 

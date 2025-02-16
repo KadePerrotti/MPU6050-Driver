@@ -6,7 +6,6 @@
  * Implementations of functions that initialize and read data from
  * the MPU6050
  */
-#include <stdlib.h>
 #include <math.h>
 
 #include "REG_OPTIONS.h"
