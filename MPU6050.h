@@ -10,6 +10,10 @@
 #ifndef INC_MPU6050_H_
 #define INC_MPU6050_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 
@@ -179,5 +183,9 @@ FACTORY_TEST_RESULTS accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_
  * @return The number of bytes currently stored in the MPU6050's fifo buffer
  */
 uint16_t read_fifo_count(MPU6050_REG_READ_TYPE readReg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_MPU6050_H_ */

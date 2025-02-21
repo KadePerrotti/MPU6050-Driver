@@ -9,6 +9,10 @@
 #ifndef INC_TESTFUNCTIONS_H_
 #define INC_TESTFUNCTIONS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "MPU6050.h"
 
 typedef struct 
@@ -60,5 +64,9 @@ void poll_axes_individually
     DELAY_MS_TYPE delay,
     TIME_MS_TYPE getTime
 );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_TESTFUNCTIONS_H_ */
