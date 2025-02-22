@@ -9,6 +9,10 @@
 #ifndef INC_REG_OPTIONS_H_
 #define INC_REG_OPTIONS_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //7 bit address from datasheet. LSB takes value of AD0, which is low
 #define MPU_6050_ADDR (0x68)
 
@@ -167,5 +171,9 @@
 #define REG_INT_ENABLE (0x38)
 #define FIFO_OFLOW_EN (0x10) //fifo buffer overflow will generate an interrupt
 #define DATA_RDY_EN (0x01) //setting this bit enables an interrupt that is generated each time the sensor registers are written to
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INC_REG_OPTIONS_H_ */
