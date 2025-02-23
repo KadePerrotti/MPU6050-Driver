@@ -25,7 +25,7 @@ typedef struct
     uint8_t gyro_sel;
 
     //ACCEL_CONFIG
-    uint8_t fs;
+    uint8_t accel_sel;
 
     //SMPRT_DIV
     uint8_t rate_div;
@@ -40,6 +40,16 @@ typedef struct
  * REG_SMPRT_DIV
  */
 SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg);
+
+/**
+ * Helper function that builds a string comparing expected values to their
+ * actual.
+ * @param expected The configuration values expected to have been read back
+ * @param actual The actual configuration values read back
+ * @param buff Points to where the string should be built
+ * @return the size of the string built
+ */
+uint16_t print_setup_registers_results(SETUP_REGISTERS expected, SETUP_REGISTERS actual, char* buff);
 
 /**
  * @brief testing function that reads each gyro and accel axis individually

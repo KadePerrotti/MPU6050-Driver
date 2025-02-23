@@ -3,16 +3,17 @@
  *
  *  Created on: Feb 3, 2025
  *      Author: Kade Perrotti
- * Tests functions to ensure normal MPU6050 operation
+ * Tests functions to ensure normal MPU6050 operation, and string
+ * builder functions for printing test results
  */
-
+#include <stdio.h>
 #include "TEST_FUNCTIONS.h"
 #include "REG_OPTIONS.h"
 
 
 SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg)
 {
-    SETUP_REGISTERS vals; //
+    SETUP_REGISTERS vals; //configuration values to return
     uint8_t readBuff; //actual register value goes here
 
     //config register
@@ -28,7 +29,7 @@ SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg)
 
     //accelerometer config register
     readReg(REG_ACCEL_CONFIG, &readBuff);
-    vals.fs = readBuff & ACCEL_FS_SEL_MASK;
+    vals.accel_sel = readBuff & ACCEL_FS_SEL_MASK;
     readBuff = 0;
 
     //sample rate divider
@@ -37,6 +38,41 @@ SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg)
     readBuff = 0;
 
     return vals;
+}
+
+uint16_t print_setup_registers_results(SETUP_REGISTERS expected, SETUP_REGISTERS actual, char* buff)
+{
+  uint16_t size = 0; //size of the string to build
+  size += sprintf(
+        buff + size, 
+        "\r\n\n Config Reg: \r\n  FSYNC: %d, %c\r\n  DLPF: %d, %c\r\n", 
+        actual.fsync, 
+        actual.fsync == expected.fsync ? 't' : 'f',
+        actual.dlpf,
+        actual.dlpf == expected.dlpf ? 't' : 'f');
+
+  size += sprintf(
+        buff + size, 
+        "\r\n\n Gyro Config Reg: \r\n  Full Scale: %d, %c\r\n", 
+        actual.gyro_sel, 
+        actual.gyro_sel == expected.gyro_sel ? 't' : 'f'
+        );
+  
+  size += sprintf(
+        buff + size, 
+        "\r\n\n Accel Config Reg: \r\n  Full Scale: %d, %c\r\n", 
+        actual.accel_sel, 
+        actual.accel_sel == expected.accel_sel ? 't' : 'f'
+    );
+
+  size += sprintf(
+        buff + size, 
+        "\r\n\n Sample Rate Div: \r\n  Divider: %d, %c\r\n", 
+        actual.rate_div, 
+        actual.rate_div == expected.rate_div ? 't' : 'f'
+    );
+    buff[size] = '\0';
+    return size;
 }
 
 void poll_axes_individually
