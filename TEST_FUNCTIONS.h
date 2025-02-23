@@ -50,10 +50,10 @@ SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg);
  * @param buff Points to where the string should be built
  * @return the size of the string built
  */
-uint16_t print_setup_registers_results(SETUP_REGISTERS expected, SETUP_REGISTERS actual, char* buff);
+uint16_t build_setup_registers_string(SETUP_REGISTERS expected, SETUP_REGISTERS actual, char* buff);
 
 /**
- * @brief testing function that reads each gyro and accel axis individually
+ * @brief testing function that reads each gyro and accel axis
  * from the individual register for the amount of time specified
  * @param sampleRate rate to sample each axis in Hz
  * @param sampleTime total amount of time to sample in ms
@@ -76,6 +76,16 @@ void poll_axes_individually
     TIME_MS_TYPE getTime
 );
 
+/**
+ * Builds a string containing results from poll_axes_individually
+ * @param data array containing data from all 6 axis, in the order
+ * accel x, y, z, gyro x, y, z
+ * @param dataSize number of elements in data (not num bytes)
+ * @param buff Points to where the string should be built
+ * @return the size of the string built
+ */
+uint16_t build_poll_axes_string(float *data, uint16_t dataSize, char *buff);
+
 
 /**
  * Helper function that builds a string representing the results
@@ -85,7 +95,7 @@ void poll_axes_individually
  * @param buff Points to where the string should be built
  * @return the size of the string built
  */
-uint16_t print_self_test_results(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_RESULTS accelResults, char* buff);
+uint16_t build_self_tests_string(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_RESULTS accelResults, char* buff);
 
 #ifdef __cplusplus
 }

@@ -40,7 +40,7 @@ SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg)
     return vals;
 }
 
-uint16_t print_setup_registers_results(SETUP_REGISTERS expected, SETUP_REGISTERS actual, char* buff)
+uint16_t build_setup_registers_string(SETUP_REGISTERS expected, SETUP_REGISTERS actual, char* buff)
 {
   uint16_t size = 0; //size of the string being built
   size += sprintf(
@@ -119,7 +119,28 @@ void poll_axes_individually
     }
 }
 
-uint16_t print_self_test_results(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_RESULTS accelResults, char* buff)
+uint16_t build_poll_axes_string(float *data, uint16_t dataSize, char *buff)
+{
+    uint16_t totalSize = 0;
+    const int numAxis = 6;
+    
+    // build table header
+    totalSize += sprintf(buff + totalSize, "\r\n\naccelX, accelY, accelZ, gyroX, gyroY, gyroZ");
+
+    // build data rows
+    for (uint16_t i = 0; i < dataSize; i += numAxis)
+    {
+        totalSize += sprintf(buff + totalSize, "\r\n%.2f, %.2f, %.2f, %.2f, %.2f, %.2f", 
+            data[i], data[i + 1], data[i + 2], // accel xyz
+            data[i + 3], data[i + 4], data[i + 5]  // gyro xyz
+        );
+    }
+
+    return totalSize;
+}
+
+
+uint16_t build_self_tests_string(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_RESULTS accelResults, char* buff)
 {
     uint16_t size = 0; //size of the string being built
 
