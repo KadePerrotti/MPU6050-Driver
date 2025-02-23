@@ -38,12 +38,13 @@ typedef struct
  * 
  * Checks: REG_CONFIG, REG_GYRO_CONFIG, REG_ACCEL_CONFIG,
  * REG_SMPRT_DIV
+ * @param readReg pointer to function that implements reading an mpu6050 register
  */
 SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg);
 
 /**
- * Helper function that builds a string comparing expected values to their
- * actual.
+ * Helper function that builds a string comparing expected configuration 
+ * values to their actual.
  * @param expected The configuration values expected to have been read back
  * @param actual The actual configuration values read back
  * @param buff Points to where the string should be built
@@ -74,6 +75,17 @@ void poll_axes_individually
     DELAY_MS_TYPE delay,
     TIME_MS_TYPE getTime
 );
+
+
+/**
+ * Helper function that builds a string representing the results
+ *  of the accelerometer and gyroscope self test functions.
+ * @param gyroResults struct containing results of gyro self test
+ * @param accelResults struct containing results of accel self test
+ * @param buff Points to where the string should be built
+ * @return the size of the string built
+ */
+uint16_t print_self_test_results(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_RESULTS accelResults, char* buff);
 
 #ifdef __cplusplus
 }

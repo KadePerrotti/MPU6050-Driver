@@ -42,7 +42,7 @@ SETUP_REGISTERS read_setup_registers(MPU6050_REG_READ_TYPE readReg)
 
 uint16_t print_setup_registers_results(SETUP_REGISTERS expected, SETUP_REGISTERS actual, char* buff)
 {
-  uint16_t size = 0; //size of the string to build
+  uint16_t size = 0; //size of the string being built
   size += sprintf(
         buff + size, 
         "\r\n\n Config Reg: \r\n  FSYNC: %d, %c\r\n  DLPF: %d, %c\r\n", 
@@ -117,4 +117,55 @@ void poll_axes_individually
         int totalTime = endRead - startRead; //ms
         delay(samplePeriodMs - totalTime);
     }
+}
+
+uint16_t print_self_test_results(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_RESULTS accelResults, char* buff)
+{
+    uint16_t size = 0; //size of the string being built
+
+    // Gyro
+    size += sprintf(
+        buff + size,
+        "\r\nGyro X self test: %c, change from factory trim: %f%%", 
+        ( gyroResults.failPercent > gyroResults.xAxis && gyroResults.xAxis > -gyroResults.failPercent ) ? 'P' : 'F', 
+        gyroResults.xAxis
+    );
+    
+
+    size += sprintf(
+        buff + size,
+        "\r\nGyro Y self test: %c, change from factory trim: %f%%", 
+        ( gyroResults.failPercent > gyroResults.yAxis && gyroResults.yAxis > -gyroResults.failPercent ) ? 'P' : 'F', 
+        gyroResults.yAxis
+    );
+
+    size += sprintf(
+        buff + size,
+        "\r\nGyro Z self test: %c, change from factory trim: %f%%", 
+        ( gyroResults.failPercent > gyroResults.zAxis && gyroResults.zAxis > -gyroResults.failPercent ) ? 'P' : 'F', 
+        gyroResults.zAxis
+    );
+
+    // Accel
+    size += sprintf(
+        buff + size,
+        "\r\nAccel X self test: %c, change from factory trim: %f%%", 
+        ( accelResults.failPercent > accelResults.xAxis && accelResults.xAxis > -accelResults.failPercent ) ? 'P' : 'F', 
+        accelResults.xAxis
+    );
+
+    size += sprintf(
+        buff + size,
+        "\r\nAccel Y self test: %c, change from factory trim: %f%%", 
+        ( accelResults.failPercent > accelResults.yAxis && accelResults.yAxis > -accelResults.failPercent ) ? 'P' : 'F', 
+        accelResults.yAxis
+    );
+
+    size += sprintf(
+        buff + size,
+        "\r\nAccel Z self test: %c, change from factory trim: %f%%", 
+        ( accelResults.failPercent > accelResults.zAxis && accelResults.zAxis > -accelResults.failPercent ) ? 'P' : 'F', 
+        accelResults.zAxis
+    );
+    return size;
 }
