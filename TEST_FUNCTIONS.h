@@ -13,6 +13,8 @@
 extern "C" {
 #endif
 
+#define NUM_FIFO_COUNT_TESTS (10) //number of tests for fifo count test
+
 #include "MPU6050.h"
 
 typedef struct 
@@ -86,7 +88,6 @@ void poll_axes_individually
  */
 uint16_t build_poll_axes_string(float *data, uint16_t dataSize, char *buff);
 
-
 /**
  * Helper function that builds a string representing the results
  *  of the accelerometer and gyroscope self test functions.
@@ -97,6 +98,48 @@ uint16_t build_poll_axes_string(float *data, uint16_t dataSize, char *buff);
  */
 uint16_t build_self_tests_string(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_RESULTS accelResults, char* buff);
 
+/**
+ * Periodically checks the fifo count. Uses readPeriod, sampleRate, and
+ * numAxes to determine if the fifo will overflow. Will return
+ * early if the number of bytes expected to fill the fifo each iteration exceeds
+ * the fifo size. 
+ * @param readPeriodMs How often to check the fifo count
+ * @param sampleRate rate at which an axis is written to the fifo
+ * @param numAxes Number of axis being written to the fifo (gyro and accel each have 3)
+ * @param burstRead function that implements burst reads of MPU6050 registers
+ * @param readReg function that implements single register reads of MPU6050 registers
+ * @param delay function that blocks program execution for the specified ms
+ * @param getTime function that returns the current tick time in ms
+ * @param fifoCountResults array that save the fifo count each iteration
+ * @param timePerIter array that saves the time it takes to read the fifo and count each iter
+ * @param bytesPerRead number of bytes expected to fill fifo during each read
+ */
+void fifo_count_test(
+    uint16_t readPeriodMs, 
+    uint16_t sampleRate, 
+    uint8_t numAxes, 
+    MPU6050_BURST_READ_TYPE burstRead, 
+    MPU6050_REG_READ_TYPE readReg,
+    DELAY_MS_TYPE delay,
+    TIME_MS_TYPE getTime,
+    uint16_t *fifoCountResults, 
+    uint32_t *timePerIter, 
+    float *bytesPerRead
+);
+
+/**
+ * Builds a string reporting results from fifo_count_test
+ * @param fifoCountResults array of saved fifo counts
+ * @param timePerIter time it took to read fifo and count for each iter
+ * @param numBytesExpected the expected fifo count for each iteration
+ * @param buff location of string
+ */
+uint16_t fifo_count_build_string(
+    uint16_t *fifoCountResults, 
+    uint32_t *timePerIter, 
+    float bytesPerRead, 
+    char *buff
+);
 #ifdef __cplusplus
 }
 #endif

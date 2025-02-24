@@ -190,3 +190,88 @@ uint16_t build_self_tests_string(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_
     );
     return size;
 }
+
+void fifo_count_test(
+    uint16_t readPeriodMs, 
+    uint16_t sampleRate, 
+    uint8_t numAxes, 
+    MPU6050_BURST_READ_TYPE burstRead, 
+    MPU6050_REG_READ_TYPE readReg,
+    DELAY_MS_TYPE delay,
+    TIME_MS_TYPE getTime,
+    uint16_t *fifoCountResults, 
+    uint32_t *timePerIter, 
+    float *bytesPerRead
+)
+{
+    const uint8_t numTests = NUM_FIFO_COUNT_TESTS;
+
+    // Calculate expected bytes per read period
+    *bytesPerRead = (BYTES_PER_MEASURE * sampleRate * numAxes * readPeriodMs / 1000.0f);
+    
+    // Ensure expected bytes do not exceed FIFO size
+    if (*bytesPerRead > FIFO_SIZE)
+    {
+        return; // Caller should handle error reporting
+    }
+
+    // Read data into this buffer 
+    uint8_t throwAway[1024]; 
+    
+    // Clear the buffer and count by reading the FIFO
+    uint16_t clearCount = read_fifo_count(readReg); // Read the current FIFO count
+    burstRead(REG_FIFO_R_W, throwAway, clearCount); // Discard the read values
+    
+    delay(readPeriodMs); // Wait for the required time
+    
+    // Read FIFO count numTests times
+    for (int i = 0; i < numTests; i++)
+    {
+        uint32_t startTime = getTime();
+        
+        fifoCountResults[i] = read_fifo_count(readReg); // Store FIFO count
+        
+        // Clear FIFO by reading it
+        burstRead(REG_FIFO_R_W, throwAway, fifoCountResults[i]);
+        
+        uint32_t endTime = getTime();
+        timePerIter[i] = endTime - startTime;
+
+        // Delay to allow FIFO to refill
+        delay(readPeriodMs - timePerIter[i]); 
+    }
+}
+
+uint16_t fifo_count_build_string(
+    uint16_t *fifoCountResults, 
+    uint32_t *timePerIter, 
+    float bytesPerRead, 
+    char *buff
+)
+{
+    uint16_t size = 0;
+    const uint8_t numTests = NUM_FIFO_COUNT_TESTS;
+
+    //first, ensure the expected bytes per read did not overflow fifo
+    if (bytesPerRead > FIFO_SIZE)
+    {
+        size += sprintf(buff + size, "\r\n\nError: Expected bytesPerRead (%.2f) is larger than fifo", bytesPerRead);
+        return size;
+    }
+
+    // Header message
+    size += sprintf(buff + size, "\r\n\nExpecting %.2f bytes in fifo each test", bytesPerRead);
+
+    // Append test results
+    for (int i = 0; i < numTests; i++)
+    {
+        size += sprintf(buff + size, 
+            "\r\ntest %d, counted %d bytes in fifo, took %lu ms to read fifo",
+            i + 1,
+            fifoCountResults[i],
+            timePerIter[i] 
+        );
+    }
+
+    return size;
+}
