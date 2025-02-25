@@ -242,7 +242,7 @@ void fifo_count_test(
     }
 }
 
-uint16_t fifo_count_build_string(
+uint16_t build_fifo_count_string(
     uint16_t *fifoCountResults, 
     uint32_t *timePerIter, 
     float bytesPerRead, 
@@ -273,5 +273,73 @@ uint16_t fifo_count_build_string(
         );
     }
 
+    return size;
+}
+
+void read_fifo_test(
+    uint16_t readPeriodMs, 
+    uint8_t data[NUM_READ_FIFO_TESTS][FIFO_SIZE],
+    uint16_t fifoCounts[NUM_READ_FIFO_TESTS],
+    MPU6050_BURST_READ_TYPE burstRead, 
+    MPU6050_REG_READ_TYPE readReg,
+    DELAY_MS_TYPE delay,
+    TIME_MS_TYPE getTime
+)
+{
+    const uint8_t numTests = NUM_READ_FIFO_TESTS;
+
+    //get data
+    for(uint8_t i = 0; i < numTests; i++)
+    {
+        uint32_t startTime = getTime();
+        
+        fifoCounts[i] = read_fifo_count(readReg);
+        
+        //read data out of fifo
+        burstRead(REG_FIFO_R_W, data[i], fifoCounts[i]);
+        
+        uint32_t endTime = getTime();
+        uint32_t total = endTime - startTime;
+        delay(readPeriodMs - total); //delay to re-fill the fifo before next read
+    }
+}
+
+uint16_t build_read_fifo_string(
+    float accelScaler,
+    float gyroScaler,
+    uint8_t data[NUM_READ_FIFO_TESTS][FIFO_SIZE],
+    uint16_t fifoCount[NUM_READ_FIFO_TESTS],
+    char* buff
+)
+{
+    const uint8_t numTests = NUM_READ_FIFO_TESTS;
+    const uint8_t numAxes = 6;
+    uint16_t size = 0;
+    
+
+    //build header
+    size += sprintf(buff + size, "\r\n\naccelX, accelY, accelZ, gyroX, gyroY, gyroZ");
+    
+    //build data columns
+    for(uint8_t testNum = 0; testNum < numTests; testNum++)
+    {
+        for(int dataPtr = 0; dataPtr < fifoCount[testNum]; dataPtr += (numAxes * 2))
+        {
+            //unpack and scale raw data into meaningful units
+            float accelX = TRANSFORM(data[testNum][dataPtr], data[testNum][dataPtr + 1], accelScaler);
+            float accelY = TRANSFORM(data[testNum][dataPtr + 2], data[testNum][dataPtr + 3], accelScaler);
+            float accelZ = TRANSFORM(data[testNum][dataPtr + 4], data[testNum][dataPtr + 5], accelScaler);
+
+            float gyroX = TRANSFORM(data[testNum][dataPtr + 6], data[testNum][dataPtr + 7], gyroScaler);
+            float gyroY = TRANSFORM(data[testNum][dataPtr + 8], data[testNum][dataPtr + 9], gyroScaler);
+            float gyroZ = TRANSFORM(data[testNum][dataPtr + 10], data[testNum][dataPtr + 11], gyroScaler);
+            
+            size += sprintf(
+                buff + size, 
+                "\r\n%.2f, %.2f, %.2f, %.2f, %.2f, %.2f",
+                accelX, accelY, accelZ, gyroX, gyroY, gyroZ
+            );
+        }
+    }
     return size;
 }

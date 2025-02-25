@@ -53,6 +53,7 @@ typedef int MPU6050_REG_READ_TYPE(uint16_t, uint8_t*);
  * to access buffered data.
  * @param 1: Address of the register to read
  * @param 2: Pointer to read the register's data into
+ * @param 3: Number of bytes to read
  */
 typedef int MPU6050_BURST_READ_TYPE(uint16_t, uint8_t*, uint16_t);
 

@@ -13,7 +13,8 @@
 extern "C" {
 #endif
 
-#define NUM_FIFO_COUNT_TESTS (10) //number of tests for fifo count test
+#define NUM_FIFO_COUNT_TESTS (10)
+#define NUM_READ_FIFO_TESTS (3) 
 
 #include "MPU6050.h"
 
@@ -134,12 +135,57 @@ void fifo_count_test(
  * @param numBytesExpected the expected fifo count for each iteration
  * @param buff location of string
  */
-uint16_t fifo_count_build_string(
+uint16_t build_fifo_count_string(
     uint16_t *fifoCountResults, 
     uint32_t *timePerIter, 
     float bytesPerRead, 
     char *buff
 );
+
+/**
+ * Periodically read the fifo and store the resulting data.
+ * Note: the data returned from this function still needs to be unpacked
+ * and scaled into actual gyro / accel readings
+ * Note 2: Expects the fifo to be collecting data from all 6 imu axes
+ * @param readPeriodMs How often to read the fifo
+ * @param numTests How many times to read the fifo
+ * @param data Pointer to a double array, where first index is test num
+ * and second is actual data collected during that test
+ * @param fifoCounts the number of bytes read from the fifo for each test
+ * @param burstRead function that implements burst reads of MPU6050 registers
+ * @param readReg function that implements single register reads of MPU6050 registers
+ * @param delay function that blocks program execution for the specified ms
+ * @param getTime function that returns the current tick time in ms
+ */
+void read_fifo_test(
+    uint16_t readPeriodMs, 
+    uint8_t data[NUM_READ_FIFO_TESTS][FIFO_SIZE],
+    uint16_t fifoCounts[NUM_READ_FIFO_TESTS],
+    MPU6050_BURST_READ_TYPE burstRead, 
+    MPU6050_REG_READ_TYPE readReg,
+    DELAY_MS_TYPE delay,
+    TIME_MS_TYPE getTime
+);
+
+/**
+ * Builds a string reporting results from read_fifo_test
+ * @param accelScaler scaler to transform raw accel data into g
+ * @param gyroScaler scaler to transform raw gyro data into degrees per second
+ * @param data Pointer to a double array, where first index is test num
+ * and second is actual data collected during that test
+ * @param fifoCounts the number of bytes read from the fifo for each test
+ * @param buff Points to where the string should be built
+ * @return the size of the string built
+ */
+uint16_t build_read_fifo_string(
+    float accelScaler,
+    float gyroScaler,
+    uint8_t data[NUM_READ_FIFO_TESTS][FIFO_SIZE],
+    uint16_t fifoCounts[NUM_READ_FIFO_TESTS],
+    char* buff
+);
+
+
 #ifdef __cplusplus
 }
 #endif
