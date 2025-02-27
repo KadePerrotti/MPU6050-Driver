@@ -148,7 +148,7 @@ FACTORY_TEST_RESULTS accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_
     accelFs &= ACCEL_FS_SEL_MASK; //keep only the FS_SEL setting
 
     //set accel to 8g for test
-    writeReg(REG_ACCEL_CONFIG, ACCEL_FS_8G);
+    writeReg(REG_ACCEL_CONFIG, ACCEL_FS_SEL_8G);
 
     //wait
     delay(250);
@@ -162,7 +162,7 @@ FACTORY_TEST_RESULTS accel_self_test(MPU6050_REG_READ_TYPE readReg, MPU6050_REG_
     //enable self test, and datasheet requires accel set to 8g
     writeReg(
         REG_ACCEL_CONFIG, 
-        ACCEL_FS_8G | ACCEL_XA_ST | ACCEL_YA_ST | ACCEL_ZA_ST
+        ACCEL_FS_SEL_8G | ACCEL_XA_ST | ACCEL_YA_ST | ACCEL_ZA_ST
     );
 
     //wait

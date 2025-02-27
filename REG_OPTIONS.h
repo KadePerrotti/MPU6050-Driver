@@ -117,10 +117,10 @@ extern "C" {
 #define ACCEL_XA_ST (0x80) //activate accel self tests
 #define ACCEL_YA_ST (0x40)
 #define ACCEL_ZA_ST (0x20)
-#define ACCEL_FS_2G (0x0) //Accel full scale range +-2g
-#define ACCEL_FS_4G (0x1 << 3) //Accel full scale range +-4g
-#define ACCEL_FS_8G (0x2 << 3) //Accel full scale range +-8g
-#define ACCEL_FS_16G (0x3 << 3) //Accel full scale range +-16g
+#define ACCEL_FS_SEL_2G (0x0) //Accel full scale range +-2g
+#define ACCEL_FS_SEL_4G (0x1 << 3) //Accel full scale range +-4g
+#define ACCEL_FS_SEL_8G (0x2 << 3) //Accel full scale range +-8g
+#define ACCEL_FS_SEL_16G (0x3 << 3) //Accel full scale range +-16g
 #define ACCEL_FS_2_DIV (16384.0f) //accel scaler for 2g
 #define ACCEL_FS_4_DIV (8192.0f) //accel scaler for 4g
 #define ACCEL_FS_8_DIV (4096.0f) //accel scaler for 8g
