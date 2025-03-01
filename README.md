@@ -114,11 +114,102 @@ uint16_t read_fifo_count(MPU6050_REG_READ_TYPE readReg);
 ```
 Reads the number of bytes currently stored in the MPU6050's FIFO buffer.
 
-## Usage
-1. Implement the required register read, write, and timing functions.
-2. Initialize the MPU6050 using `init_mpu6050()`.
-3. Read sensor data using `read_accel_axis()` and `read_gyro_axis()`.
-4. Perform self-tests with `gyro_self_test()` and `accel_self_test()`.
-5. Use `read_fifo_count()` and a burst read function to read the mpu6050's buffer.
+## Basic STM32 Example
+See the example repos for more in depth usage
+```c
+#include "Drivers/MPU6050-Driver/REG_OPTIONS.h"
+#include "Drivers/MPU6050-Driver/MPU6050.h"
 
+
+/**
+ * @brief Writes a single byte to the specified MPU6050 register
+ * using ST's i2c HAL
+ * @param regAddress the address of the register to write
+ * @param data the data to write to the register
+ * @return status of the transmission
+ */
+int MPU6050_REG_WRITE_STM32(uint16_t regAddr, uint8_t regValue)
+{
+    HAL_StatusTypeDef status = HAL_I2C_Mem_Write(
+        &hi2c1,
+        MPU_6050_HAL_I2C_ADDR,
+        regAddr,
+        I2C_MEMADD_SIZE_8BIT,
+        &regValue,
+        SIZE_1_BYTE,
+        HAL_I2C_TIMEOUT
+    );
+    return status;
+}
+
+/**
+ * @brief Reads a single byte from the specified MPU6050 register
+ * using ST's i2c HAL
+ * @param regAddress the address of the register to read
+ * @param data memory to read data into
+ * @return status of the transmission
+ */
+int MPU6050_REG_READ_STM32(uint16_t regAddr, uint8_t* valAddr)
+{
+    HAL_StatusTypeDef status = HAL_I2C_Mem_Read(
+        &hi2c1, 
+        MPU_6050_HAL_I2C_ADDR,
+        regAddr,
+        I2C_MEMADD_SIZE_8BIT,
+        valAddr,
+        I2C_MEMADD_SIZE_8BIT,
+        HAL_I2C_TIMEOUT
+    );
+    return status;
+}
+
+int main(void)
+{
+    // Assign function pointers to the STM32 implementations of 
+    // reads, writes, and timing.
+    MPU6050_REG_WRITE_TYPE* writeReg = MPU6050_REG_WRITE_STM32;
+    MPU6050_REG_READ_TYPE* readReg = MPU6050_REG_READ_STM32;
+    DELAY_MS_TYPE* delay = HAL_Delay;
+    TIME_MS_TYPE* getTime = HAL_GetTick;
+
+    //basic initialization
+    init_mpu6050(writeReg, delay);
+
+    //configure important accelerometer and gyro settings
+  
+    //setup the low pass filter. 
+    writeReg(REG_CONFIG, DLPF_CFG_6 | EXT_SYNC_OFF);
+
+    //select Gyroscope's full scale range
+    writeReg(REG_GYRO_CONFIG, GYRO_FS_SEL_250_DPS);   
+    
+    //select Accelerometer's full scale range
+    writeReg(REG_ACCEL_CONFIG, ACCEL_FS_SEL_2G);
+
+    //setup the sample rate divider
+    writeReg(REG_SMPRT_DIV, SAMPLE_RATE_50Hz);
+
+    //read all 6 axis
+    float samplePeriodMS = 20; //sample rate is 50Hz, so 20ms period for each sample
+    while(true)
+    {
+        uint32_t startRead = getTime();
+        float accelX = read_accel_axis(REG_ACCEL_X_MEASURE_1, ACCEL_FS_2_DIV, readReg);
+        
+        float accelY = read_accel_axis(REG_ACCEL_Y_MEASURE_1, ACCEL_FS_2_DIV, readReg);
+        
+        float accelZ = read_accel_axis(REG_ACCEL_Z_MEASURE_1, ACCEL_FS_2_DIV, readReg);
+
+        float gyroX = read_gyro_axis(REG_GYRO_X_MEASURE_1, GYRO_FS_250_DIV, readReg);
+
+        float gyroY = read_gyro_axis(REG_GYRO_Y_MEASURE_1, GYRO_FS_250_DIV, readReg);
+
+        float gyroZ = read_gyro_axis(REG_GYRO_Z_MEASURE_1, GYRO_FS_250_DIV, readReg);
+
+        int endRead = getTime();
+        int totalTime = endRead - startRead; //ms
+        delay(samplePeriodMs - totalTime); 
+    }
+}
+```
 
