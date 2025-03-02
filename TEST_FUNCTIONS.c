@@ -188,6 +188,7 @@ uint16_t build_self_tests_string(FACTORY_TEST_RESULTS gyroResults, FACTORY_TEST_
         ( accelResults.failPercent > accelResults.zAxis && accelResults.zAxis > -accelResults.failPercent ) ? 'P' : 'F', 
         accelResults.zAxis
     );
+    buff[size] = '\0';
     return size;
 }
 
@@ -334,7 +335,7 @@ uint16_t build_read_fifo_string(
     //build data columns
     for(uint8_t testNum = 0; testNum < numTests; testNum++)
     {
-        for(int dataPtr = 0; dataPtr < fifoCount[testNum]; dataPtr += (numAxes * 2))
+        for(uint16_t dataPtr = 0; dataPtr < fifoCount[testNum]; dataPtr += (numAxes * 2))
         {
             //unpack and scale raw data into meaningful units
             float accelX = TRANSFORM(data[testNum][dataPtr], data[testNum][dataPtr + 1], accelScaler);

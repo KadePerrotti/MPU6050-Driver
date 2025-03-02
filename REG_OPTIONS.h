@@ -55,6 +55,7 @@ extern "C" {
  * off
  */
 #define REG_SMPRT_DIV (0x19)
+#define SAMPLE_RATE_5Hz (0xC7)
 #define SAMPLE_RATE_50Hz (0x13) 
 #define SAMPLE_RATE_100Hz (0x9) //Gyro rate = 1KHz when DLPF enabled
 #define SAMPLE_RATE_200Hz (0x4)
