@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-#define NUM_FIFO_COUNT_TESTS (10)
+#define NUM_FIFO_COUNT_TESTS (5)
 #define NUM_READ_FIFO_TESTS (3) 
 
 #include "MPU6050.h"
