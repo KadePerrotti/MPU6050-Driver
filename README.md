@@ -20,7 +20,9 @@ This driver provides functions for initializing the device, reading sensor data,
 - *TEST_FUNCTIONS.c / .h*: Functions that test operations on the MPU6050 such as reading axes or the fifo buffer. They give examples for how this driver could be used as part of a larger application. **Not required to use the driver**.
 
 ## Example Projects
-See the [example projects]() for demonstrations on various platforms.
+See the example projects for demonstrations on various platforms:
+- [STM32](https://github.com/KadePerrotti/STM32-MPU6050-Driver-Example)
+- [Arduino](https://github.com/KadePerrotti/Arduino-MPU6050-Driver-Example)
 
 ## Requirements
 This driver is designed to be platform-independent and requires the user to provide implementations for low-level register read, write, and timing functions.
