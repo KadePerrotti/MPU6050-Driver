@@ -128,7 +128,7 @@ See the example repos for more in depth usage
  * @param data the data to write to the register
  * @return status of the transmission
  */
-int MPU6050_REG_WRITE_STM32(uint16_t regAddr, uint8_t regValue)
+int stm32_reg_write_mpu6050(uint16_t regAddr, uint8_t regValue)
 {
     HAL_StatusTypeDef status = HAL_I2C_Mem_Write(
         &hi2c1,
@@ -149,7 +149,7 @@ int MPU6050_REG_WRITE_STM32(uint16_t regAddr, uint8_t regValue)
  * @param data memory to read data into
  * @return status of the transmission
  */
-int MPU6050_REG_READ_STM32(uint16_t regAddr, uint8_t* valAddr)
+int stm32_reg_read_mpu6050(uint16_t regAddr, uint8_t* valAddr)
 {
     HAL_StatusTypeDef status = HAL_I2C_Mem_Read(
         &hi2c1, 
@@ -167,8 +167,8 @@ int main(void)
 {
     // Assign function pointers to the STM32 implementations of 
     // reads, writes, and timing.
-    MPU6050_REG_WRITE_TYPE* writeReg = MPU6050_REG_WRITE_STM32;
-    MPU6050_REG_READ_TYPE* readReg = MPU6050_REG_READ_STM32;
+    MPU6050_REG_WRITE_TYPE* writeReg = stm32_reg_write_mpu6050;
+    MPU6050_REG_READ_TYPE* readReg = stm32_reg_read_mpu6050;
     DELAY_MS_TYPE* delay = HAL_Delay;
     TIME_MS_TYPE* getTime = HAL_GetTick;
 
