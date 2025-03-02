@@ -218,7 +218,7 @@ void fifo_count_test(
     // Read data into this buffer 
     uint8_t throwAway[1024]; 
     
-    // Clear the buffer and count by reading the FIFO
+    // Clear the buffer and count by reading the FIFO so we can start fresh for the test
     uint16_t clearCount = read_fifo_count(readReg); // Read the current FIFO count
     burstRead(REG_FIFO_R_W, throwAway, clearCount); // Discard the read values
     
@@ -237,8 +237,11 @@ void fifo_count_test(
         uint32_t endTime = getTime();
         timePerIter[i] = endTime - startTime;
 
+        //ensure that the max time we delay is readPeriodMs
+        uint32_t delayTime = timePerIter[i] > readPeriodMs ? readPeriodMs : readPeriodMs - timePerIter[i];
+        
         // Delay to allow FIFO to refill
-        delay(readPeriodMs - timePerIter[i]); 
+        delay(delayTime); 
     }
 }
 
@@ -287,20 +290,28 @@ void read_fifo_test(
 )
 {
     const uint8_t numTests = NUM_READ_FIFO_TESTS;
+    uint8_t throwAway[FIFO_SIZE];
+    // Clear the buffer and count by reading the FIFO so we can start fresh for the test
+	uint16_t clearCount = read_fifo_count(readReg); // Read the current FIFO count
+	burstRead(REG_FIFO_R_W, throwAway, clearCount); // Discard the read values
+
+	delay(readPeriodMs); // Wait for the required time to fill up fifo for first test
 
     //get data
     for(uint8_t i = 0; i < numTests; i++)
     {
         uint32_t startTime = getTime();
-        
-        fifoCounts[i] = read_fifo_count(readReg);
-        
-        //read data out of fifo
-        burstRead(REG_FIFO_R_W, data[i], fifoCounts[i]);
+        fifoCounts[i] = read_fifo_count(readReg); //get number of bytes in fifo
+        burstRead(REG_FIFO_R_W, data[i], fifoCounts[i]); //read bytes out of fifo
         
         uint32_t endTime = getTime();
         uint32_t total = endTime - startTime;
-        delay(readPeriodMs - total); //delay to re-fill the fifo before next read
+
+        //ensure that the max time we delay is readPeriodMs
+        uint32_t delayTime = total > readPeriodMs ? readPeriodMs : readPeriodMs - total;
+        
+        // Delay to allow FIFO to refill
+        delay(delayTime); 
     }
 }
 
